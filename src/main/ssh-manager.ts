@@ -1,0 +1,417 @@
+import { Client, ConnectConfig } from 'ssh2'
+import type { ClientChannel } from 'ssh2'
+import { createServer, Server, Socket, connect as netConnect } from 'net'
+import type { ServerProfile, TunnelRule, SftpEntry, SessionStatus } from '@shared/types'
+
+type Emit = (channel: string, payload: unknown) => void
+
+interface ShellSession {
+  client: Client
+  stream: ClientChannel
+  serverId: string
+}
+
+interface ActiveTunnel {
+  rule: TunnelRule
+  client: Client
+  server?: Server // for local / dynamic forwards
+}
+
+/**
+ * Builds an ssh2 ConnectConfig from a profile. Optionally tunnels the TCP
+ * connection through a jump host (bastion) — basic ProxyJump support.
+ */
+function authFor(profile: ServerProfile): Partial<ConnectConfig> {
+  const cfg: Partial<ConnectConfig> = {}
+  if (profile.authMethod === 'password') {
+    cfg.password = profile.password
+  } else if (profile.authMethod === 'key') {
+    cfg.privateKey = profile.privateKey
+    if (profile.passphrase) cfg.passphrase = profile.passphrase
+  } else if (profile.authMethod === 'agent') {
+    cfg.agent = process.env.SSH_AUTH_SOCK || (process.platform === 'win32' ? 'pageant' : undefined)
+  }
+  return cfg
+}
+
+function baseConfig(profile: ServerProfile): ConnectConfig {
+  return {
+    host: profile.host,
+    port: profile.port || 22,
+    username: profile.username,
+    readyTimeout: 20000,
+    keepaliveInterval: (profile.keepaliveInterval ?? 30) * 1000,
+    // Many servers only offer keyboard-interactive for password logins; let
+    // ssh2 fall back to it and answer the prompts with the stored password.
+    tryKeyboard: profile.authMethod === 'password',
+    ...authFor(profile)
+  }
+}
+
+/** Answer keyboard-interactive prompts with the profile's password. */
+function wireKeyboardInteractive(client: Client, profile: ServerProfile): void {
+  if (profile.authMethod !== 'password') return
+  client.on('keyboard-interactive', (_name, _instructions, _lang, _prompts, finish) => {
+    finish([profile.password ?? ''])
+  })
+}
+
+export class SSHManager {
+  private emit: Emit
+  private shells = new Map<string, ShellSession>()
+  private tunnels = new Map<string, ActiveTunnel>()
+
+  constructor(emit: Emit) {
+    this.emit = emit
+  }
+
+  /** Resolve a connected ssh2 Client, optionally hopping through a jump host. */
+  private connectClient(profile: ServerProfile, jump?: ServerProfile | null): Promise<Client> {
+    return new Promise((resolve, reject) => {
+      const target = new Client()
+      const cfg = baseConfig(profile)
+      wireKeyboardInteractive(target, profile)
+
+      const finish = (config: ConnectConfig): void => {
+        target
+          .on('ready', () => resolve(target))
+          .on('error', (err) => reject(err))
+          .connect(config)
+      }
+
+      if (jump) {
+        const hop = new Client()
+        wireKeyboardInteractive(hop, jump)
+        hop
+          .on('ready', () => {
+            hop.forwardOut('127.0.0.1', 0, profile.host, profile.port || 22, (err, stream) => {
+              if (err) {
+                hop.end()
+                return reject(err)
+              }
+              // Tear down the hop when the target closes.
+              target.on('close', () => hop.end())
+              finish({ ...cfg, sock: stream })
+            })
+          })
+          .on('error', (err) => reject(err))
+          .connect(baseConfig(jump))
+      } else {
+        finish(cfg)
+      }
+    })
+  }
+
+  /** Open an interactive shell session and stream its output to the renderer. */
+  async openShell(
+    sessionId: string,
+    profile: ServerProfile,
+    cols: number,
+    rows: number,
+    jump?: ServerProfile | null
+  ): Promise<void> {
+    this.emit(`status:${sessionId}`, { status: 'connecting' as SessionStatus })
+    let client: Client
+    try {
+      client = await this.connectClient(profile, jump)
+    } catch (err) {
+      this.emit(`status:${sessionId}`, { status: 'error' as SessionStatus, message: (err as Error).message })
+      throw err
+    }
+
+    client.on('close', () => {
+      this.shells.delete(sessionId)
+      this.emit(`status:${sessionId}`, { status: 'disconnected' as SessionStatus })
+    })
+    client.on('error', (err) => {
+      this.emit(`status:${sessionId}`, { status: 'error' as SessionStatus, message: err.message })
+    })
+
+    return new Promise((resolve, reject) => {
+      client.shell({ term: 'xterm-256color', cols, rows }, (err, stream) => {
+        if (err) {
+          client.end()
+          this.emit(`status:${sessionId}`, { status: 'error' as SessionStatus, message: err.message })
+          return reject(err)
+        }
+        this.shells.set(sessionId, { client, stream, serverId: profile.id })
+        this.emit(`status:${sessionId}`, { status: 'connected' as SessionStatus })
+
+        stream.on('data', (d: Buffer) => this.emit(`data:${sessionId}`, d.toString('utf8')))
+        stream.stderr.on('data', (d: Buffer) => this.emit(`data:${sessionId}`, d.toString('utf8')))
+        stream.on('close', () => {
+          client.end()
+          this.shells.delete(sessionId)
+          this.emit(`status:${sessionId}`, { status: 'disconnected' as SessionStatus })
+        })
+        resolve()
+      })
+    })
+  }
+
+  sendData(sessionId: string, data: string): void {
+    this.shells.get(sessionId)?.stream.write(data)
+  }
+
+  resize(sessionId: string, cols: number, rows: number): void {
+    this.shells.get(sessionId)?.stream.setWindow(rows, cols, 0, 0)
+  }
+
+  disconnect(sessionId: string): void {
+    const s = this.shells.get(sessionId)
+    if (s) {
+      s.stream.end()
+      s.client.end()
+      this.shells.delete(sessionId)
+    }
+  }
+
+  /** Run a one-off command and capture its stdout/stderr. */
+  async exec(profile: ServerProfile, command: string, jump?: ServerProfile | null): Promise<{ stdout: string; stderr: string; code: number }> {
+    const client = await this.connectClient(profile, jump)
+    return new Promise((resolve, reject) => {
+      client.exec(command, (err, stream) => {
+        if (err) {
+          client.end()
+          return reject(err)
+        }
+        let stdout = ''
+        let stderr = ''
+        stream
+          .on('close', (code: number) => {
+            client.end()
+            resolve({ stdout, stderr, code: code ?? 0 })
+          })
+          .on('data', (d: Buffer) => (stdout += d.toString('utf8')))
+        stream.stderr.on('data', (d: Buffer) => (stderr += d.toString('utf8')))
+      })
+    })
+  }
+
+  // ---------------- SFTP ----------------
+
+  private sftpClients = new Map<string, Client>()
+
+  private async getSftpClient(profile: ServerProfile, jump?: ServerProfile | null): Promise<Client> {
+    const existing = this.sftpClients.get(profile.id)
+    if (existing) return existing
+    const client = await this.connectClient(profile, jump)
+    client.on('close', () => this.sftpClients.delete(profile.id))
+    this.sftpClients.set(profile.id, client)
+    return client
+  }
+
+  private sftp(client: Client): Promise<import('ssh2').SFTPWrapper> {
+    return new Promise((resolve, reject) => {
+      client.sftp((err, sftp) => (err ? reject(err) : resolve(sftp)))
+    })
+  }
+
+  async sftpList(profile: ServerProfile, path: string, jump?: ServerProfile | null): Promise<SftpEntry[]> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    const norm = path || '.'
+    return new Promise((resolve, reject) => {
+      sftp.readdir(norm, (err, list) => {
+        if (err) return reject(err)
+        const base = norm.endsWith('/') ? norm : norm + '/'
+        const entries: SftpEntry[] = list.map((e) => {
+          const m = e.attrs.mode
+          let type: SftpEntry['type'] = 'other'
+          if (e.attrs.isDirectory()) type = 'directory'
+          else if (e.attrs.isFile()) type = 'file'
+          else if (e.attrs.isSymbolicLink()) type = 'symlink'
+          return {
+            name: e.filename,
+            path: (base + e.filename).replace(/\/+/g, '/'),
+            type,
+            size: e.attrs.size,
+            mtime: e.attrs.mtime * 1000,
+            mode: m,
+            owner: e.attrs.uid,
+            group: e.attrs.gid
+          }
+        })
+        entries.sort((a, b) => {
+          if (a.type === 'directory' && b.type !== 'directory') return -1
+          if (a.type !== 'directory' && b.type === 'directory') return 1
+          return a.name.localeCompare(b.name)
+        })
+        resolve(entries)
+      })
+    })
+  }
+
+  async sftpDownload(profile: ServerProfile, remote: string, local: string, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.fastGet(remote, local, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  async sftpUpload(profile: ServerProfile, local: string, remote: string, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.fastPut(local, remote, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  async sftpMkdir(profile: ServerProfile, path: string, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.mkdir(path, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  async sftpRemove(profile: ServerProfile, path: string, isDir: boolean, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      const cb = (err: Error | null | undefined): void => (err ? reject(err) : resolve())
+      if (isDir) sftp.rmdir(path, cb)
+      else sftp.unlink(path, cb)
+    })
+  }
+
+  async sftpRename(profile: ServerProfile, from: string, to: string, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.rename(from, to, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  async sftpReadFile(profile: ServerProfile, path: string, jump?: ServerProfile | null): Promise<string> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.readFile(path, (err, buf) => (err ? reject(err) : resolve(buf.toString('utf8'))))
+    })
+  }
+
+  async sftpWriteFile(profile: ServerProfile, path: string, content: string, jump?: ServerProfile | null): Promise<void> {
+    const client = await this.getSftpClient(profile, jump)
+    const sftp = await this.sftp(client)
+    return new Promise((resolve, reject) => {
+      sftp.writeFile(path, content, (err) => (err ? reject(err) : resolve()))
+    })
+  }
+
+  // ---------------- Tunnels / port forwarding ----------------
+
+  async startTunnel(rule: TunnelRule, profile: ServerProfile, jump?: ServerProfile | null): Promise<void> {
+    if (this.tunnels.has(rule.id)) throw new Error('Tünel zaten çalışıyor.')
+    const client = await this.connectClient(profile, jump)
+    client.on('close', () => {
+      this.tunnels.delete(rule.id)
+      this.emit(`tunnel:${rule.id}`, { status: 'disconnected' })
+    })
+    client.on('error', (err) => this.emit(`tunnel:${rule.id}`, { status: 'error', message: err.message }))
+
+    if (rule.type === 'local') {
+      const server = createServer((sock: Socket) => {
+        client.forwardOut(sock.remoteAddress || '127.0.0.1', sock.remotePort || 0, rule.remoteHost, rule.remotePort, (err, stream) => {
+          if (err) {
+            sock.destroy()
+            return
+          }
+          sock.pipe(stream).pipe(sock)
+        })
+      })
+      server.on('error', (err) => this.emit(`tunnel:${rule.id}`, { status: 'error', message: err.message }))
+      server.listen(rule.localPort, rule.localHost || '127.0.0.1', () => {
+        this.tunnels.set(rule.id, { rule, client, server })
+        this.emit(`tunnel:${rule.id}`, { status: 'connected' })
+      })
+    } else if (rule.type === 'remote') {
+      client.forwardIn(rule.remoteHost || '127.0.0.1', rule.remotePort, (err) => {
+        if (err) {
+          client.end()
+          this.emit(`tunnel:${rule.id}`, { status: 'error', message: err.message })
+          return
+        }
+        this.tunnels.set(rule.id, { rule, client })
+        this.emit(`tunnel:${rule.id}`, { status: 'connected' })
+      })
+      client.on('tcp connection', (_info, accept) => {
+        const stream = accept()
+        const local = netConnect(rule.localPort, rule.localHost || '127.0.0.1', () => {
+          stream.pipe(local).pipe(stream)
+        })
+        local.on('error', () => stream.end())
+      })
+    } else if (rule.type === 'dynamic') {
+      const server = createServer((sock: Socket) => this.handleSocks(sock, client))
+      server.on('error', (err) => this.emit(`tunnel:${rule.id}`, { status: 'error', message: err.message }))
+      server.listen(rule.localPort, rule.localHost || '127.0.0.1', () => {
+        this.tunnels.set(rule.id, { rule, client, server })
+        this.emit(`tunnel:${rule.id}`, { status: 'connected' })
+      })
+    }
+  }
+
+  stopTunnel(ruleId: string): void {
+    const t = this.tunnels.get(ruleId)
+    if (!t) return
+    t.server?.close()
+    t.client.end()
+    this.tunnels.delete(ruleId)
+    this.emit(`tunnel:${ruleId}`, { status: 'disconnected' })
+  }
+
+  /** Minimal SOCKS5 (no-auth, CONNECT) over the SSH client for dynamic forwarding. */
+  private handleSocks(sock: Socket, client: Client): void {
+    let stage = 0
+    sock.on('error', () => sock.destroy())
+    sock.once('data', (greeting) => {
+      if (greeting[0] !== 0x05) return sock.destroy()
+      // No authentication required.
+      sock.write(Buffer.from([0x05, 0x00]))
+      stage = 1
+      sock.once('data', (req) => {
+        if (stage !== 1 || req[0] !== 0x05 || req[1] !== 0x01) {
+          sock.write(Buffer.from([0x05, 0x07, 0x00, 0x01, 0, 0, 0, 0, 0, 0]))
+          return sock.destroy()
+        }
+        const atyp = req[3]
+        let host = ''
+        let offset = 4
+        if (atyp === 0x01) {
+          host = `${req[4]}.${req[5]}.${req[6]}.${req[7]}`
+          offset = 8
+        } else if (atyp === 0x03) {
+          const len = req[4]
+          host = req.slice(5, 5 + len).toString('utf8')
+          offset = 5 + len
+        } else if (atyp === 0x04) {
+          const parts: string[] = []
+          for (let i = 0; i < 16; i += 2) parts.push(req.slice(4 + i, 6 + i).toString('hex'))
+          host = parts.join(':')
+          offset = 20
+        } else {
+          return sock.destroy()
+        }
+        const port = req.readUInt16BE(offset)
+        client.forwardOut(sock.remoteAddress || '127.0.0.1', sock.remotePort || 0, host, port, (err, stream) => {
+          if (err) {
+            sock.write(Buffer.from([0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0]))
+            return sock.destroy()
+          }
+          sock.write(Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0]))
+          sock.pipe(stream).pipe(sock)
+        })
+      })
+    })
+  }
+
+  /** Tear everything down (called on lock / quit). */
+  shutdown(): void {
+    for (const id of [...this.shells.keys()]) this.disconnect(id)
+    for (const id of [...this.tunnels.keys()]) this.stopTunnel(id)
+    for (const [, c] of this.sftpClients) c.end()
+    this.sftpClients.clear()
+  }
+}

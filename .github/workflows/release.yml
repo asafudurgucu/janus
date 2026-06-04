@@ -1,0 +1,38 @@
+name: Release
+
+# Bir sürüm etiketi push'landığında (örn. v1.0.1) üç platformda da derler,
+# imzalar (varsa) ve GitHub Releases'e taslak olarak yükler. electron-updater
+# bu Release'lerden otomatik güncelleme yapar.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: # Actions sekmesinden elle de tetiklenebilir
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish
+        env:
+          # electron-builder bu token ile Release'e yükler (CI'da otomatik sağlanır).
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build && npx electron-builder --publish always

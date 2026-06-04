@@ -1,0 +1,188 @@
+import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { IPC } from '@shared/ipc'
+import { vaultStore } from './store'
+import { SSHManager } from './ssh-manager'
+import { setupAutoUpdater, updater } from './updater'
+import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
+
+/** Wrap a handler so it always returns a tidy IpcResult and never throws across IPC. */
+function handle<T>(channel: string, fn: (...args: unknown[]) => Promise<T> | T): void {
+  ipcMain.handle(channel, async (_e, ...args) => {
+    try {
+      const data = await fn(...args)
+      return { ok: true, data } as IpcResult<T>
+    } catch (err) {
+      return { ok: false, error: (err as Error).message } as IpcResult<T>
+    }
+  })
+}
+
+/** Look up a server profile by id from the in-memory vault. */
+function findServer(id: string): ServerProfile {
+  const s = vaultStore.read().servers.find((x) => x.id === id)
+  if (!s) throw new Error('Sunucu bulunamadı.')
+  return s
+}
+
+/** Resolve the jump host profile for a server, if any. */
+function jumpFor(profile: ServerProfile): ServerProfile | null {
+  if (!profile.jumpHostId) return null
+  return vaultStore.read().servers.find((x) => x.id === profile.jumpHostId) ?? null
+}
+
+export function registerIpc(getWindow: () => BrowserWindow | null): void {
+  const emit = (channel: string, payload: unknown): void => {
+    getWindow()?.webContents.send(channel, payload)
+  }
+  const ssh = new SSHManager(emit)
+
+  // ---- Vault lifecycle ----
+  handle(IPC.vaultStatus, async () => ({
+    exists: await vaultStore.exists(),
+    unlocked: vaultStore.isUnlocked,
+    path: vaultStore.filePath
+  }))
+  handle(IPC.vaultCreate, async (password) => {
+    await vaultStore.create(password as string)
+    return vaultStore.read()
+  })
+  handle(IPC.vaultUnlock, async (password) => vaultStore.unlock(password as string))
+  handle(IPC.vaultLock, async () => {
+    ssh.shutdown()
+    vaultStore.lock()
+    return true
+  })
+  handle(IPC.vaultChangePassword, async (oldP, newP) => {
+    await vaultStore.changePassword(oldP as string, newP as string)
+    return true
+  })
+  handle(IPC.vaultRead, async () => vaultStore.read())
+  handle(IPC.vaultWrite, async (vault) => {
+    await vaultStore.write(vault as Vault)
+    return true
+  })
+  handle(IPC.vaultExport, async () => {
+    const win = getWindow()
+    const res = await dialog.showSaveDialog(win!, {
+      title: 'Vault dışa aktar',
+      defaultPath: 'janus-export.vault.json',
+      filters: [{ name: 'Janus Vault', extensions: ['json'] }]
+    })
+    if (res.canceled || !res.filePath) return false
+    await vaultStore.exportTo(res.filePath)
+    return res.filePath
+  })
+  handle(IPC.vaultImport, async (password) => {
+    const win = getWindow()
+    const res = await dialog.showOpenDialog(win!, {
+      title: 'Vault içe aktar',
+      properties: ['openFile'],
+      filters: [{ name: 'Janus Vault', extensions: ['json'] }]
+    })
+    if (res.canceled || !res.filePaths[0]) return false
+    return vaultStore.importFrom(res.filePaths[0], password as string)
+  })
+
+  // ---- SSH shell ----
+  handle(IPC.sshConnect, async (sessionId, serverId, cols, rows) => {
+    const profile = findServer(serverId as string)
+    await ssh.openShell(sessionId as string, profile, cols as number, rows as number, jumpFor(profile))
+    return true
+  })
+  ipcMain.on(IPC.sshData, (_e, sessionId: string, data: string) => ssh.sendData(sessionId, data))
+  ipcMain.on(IPC.sshResize, (_e, sessionId: string, cols: number, rows: number) => ssh.resize(sessionId, cols, rows))
+  ipcMain.on(IPC.sshDisconnect, (_e, sessionId: string) => ssh.disconnect(sessionId))
+  handle(IPC.sshExec, async (serverId, command) => {
+    const profile = findServer(serverId as string)
+    return ssh.exec(profile, command as string, jumpFor(profile))
+  })
+
+  // ---- SFTP ----
+  handle(IPC.sftpList, async (serverId, path) => {
+    const p = findServer(serverId as string)
+    return ssh.sftpList(p, path as string, jumpFor(p))
+  })
+  handle(IPC.sftpDownload, async (serverId, remote) => {
+    const p = findServer(serverId as string)
+    const win = getWindow()
+    const res = await dialog.showSaveDialog(win!, { defaultPath: (remote as string).split('/').pop() })
+    if (res.canceled || !res.filePath) return false
+    await ssh.sftpDownload(p, remote as string, res.filePath, jumpFor(p))
+    return res.filePath
+  })
+  handle(IPC.sftpUpload, async (serverId, remoteDir) => {
+    const p = findServer(serverId as string)
+    const win = getWindow()
+    const res = await dialog.showOpenDialog(win!, { properties: ['openFile', 'multiSelections'] })
+    if (res.canceled || res.filePaths.length === 0) return false
+    for (const local of res.filePaths) {
+      const name = local.split(/[\\/]/).pop()!
+      const remote = `${(remoteDir as string).replace(/\/$/, '')}/${name}`
+      await ssh.sftpUpload(p, local, remote, jumpFor(p))
+    }
+    return res.filePaths.length
+  })
+  handle(IPC.sftpMkdir, async (serverId, path) => {
+    const p = findServer(serverId as string)
+    await ssh.sftpMkdir(p, path as string, jumpFor(p))
+    return true
+  })
+  handle(IPC.sftpRemove, async (serverId, path, isDir) => {
+    const p = findServer(serverId as string)
+    await ssh.sftpRemove(p, path as string, isDir as boolean, jumpFor(p))
+    return true
+  })
+  handle(IPC.sftpRename, async (serverId, from, to) => {
+    const p = findServer(serverId as string)
+    await ssh.sftpRename(p, from as string, to as string, jumpFor(p))
+    return true
+  })
+  handle(IPC.sftpReadFile, async (serverId, path) => {
+    const p = findServer(serverId as string)
+    return ssh.sftpReadFile(p, path as string, jumpFor(p))
+  })
+  handle(IPC.sftpWriteFile, async (serverId, path, content) => {
+    const p = findServer(serverId as string)
+    await ssh.sftpWriteFile(p, path as string, content as string, jumpFor(p))
+    return true
+  })
+
+  // ---- Tunnels ----
+  handle(IPC.tunnelStart, async (rule) => {
+    const r = rule as TunnelRule
+    const p = findServer(r.serverId)
+    await ssh.startTunnel(r, p, jumpFor(p))
+    return true
+  })
+  handle(IPC.tunnelStop, async (ruleId) => {
+    ssh.stopTunnel(ruleId as string)
+    return true
+  })
+
+  // ---- Auto-update ----
+  setupAutoUpdater(getWindow)
+  handle(IPC.updateCheck, async () => {
+    await updater.check()
+    return true
+  })
+  handle(IPC.updateDownload, async () => {
+    await updater.download()
+    return true
+  })
+  handle(IPC.updateInstall, async () => {
+    updater.install()
+    return true
+  })
+  handle(IPC.updateGetVersion, async () => updater.version())
+
+  // ---- Window controls ----
+  ipcMain.on(IPC.windowMinimize, () => getWindow()?.minimize())
+  ipcMain.on(IPC.windowMaximize, () => {
+    const w = getWindow()
+    if (!w) return
+    w.isMaximized() ? w.unmaximize() : w.maximize()
+  })
+  ipcMain.on(IPC.windowClose, () => getWindow()?.close())
+
+  return
+}

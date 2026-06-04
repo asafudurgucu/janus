@@ -1,0 +1,58 @@
+appId: com.janus.asaf
+productName: Janus
+copyright: Copyright © 2026 asaf
+directories:
+  buildResources: build
+  output: release
+files:
+  - 'out/**'
+  - 'package.json'
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintrc,.prettierrc,tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{.npm-cache,.git}'
+
+# Single source icon (build/icon.png / build/icon.icns); other formats are derived.
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.icns
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  # Unsigned local builds run fine; signing is required for notarization & mac auto-update.
+  identity: null
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+linux:
+  icon: build/icon.png
+  category: Development
+  target:
+    - AppImage
+    - deb
+  artifactName: ${productName}-${version}.${ext}
+
+# Auto-update channel — GitHub Releases.
+# In GitHub Actions, owner/repo are auto-detected from GITHUB_REPOSITORY, so no
+# hardcoding is needed. For LOCAL publishing, add a git remote (origin) pointing
+# at your repo, or uncomment owner/repo below.
+publish:
+  provider: github
+  # owner: your-github-username
+  # repo: janus
+
+npmRebuild: false

@@ -1,0 +1,93 @@
+import { contextBridge, ipcRenderer } from 'electron'
+import { IPC } from '../shared/ipc'
+import type { Vault, ServerProfile, TunnelRule, SftpEntry, VaultStatus, UpdateStatus, IpcResult } from '../shared/types'
+
+async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
+  const res = (await ipcRenderer.invoke(channel, ...args)) as IpcResult<T>
+  if (!res.ok) throw new Error(res.error || 'Bilinmeyen hata')
+  return res.data as T
+}
+
+const api = {
+  vault: {
+    status: () => invoke<VaultStatus>(IPC.vaultStatus),
+    create: (password: string) => invoke<Vault>(IPC.vaultCreate, password),
+    unlock: (password: string) => invoke<Vault>(IPC.vaultUnlock, password),
+    lock: () => invoke<boolean>(IPC.vaultLock),
+    changePassword: (oldP: string, newP: string) => invoke<boolean>(IPC.vaultChangePassword, oldP, newP),
+    read: () => invoke<Vault>(IPC.vaultRead),
+    write: (vault: Vault) => invoke<boolean>(IPC.vaultWrite, vault),
+    export: () => invoke<string | false>(IPC.vaultExport),
+    import: (password: string) => invoke<Vault | false>(IPC.vaultImport, password)
+  },
+  ssh: {
+    connect: (sessionId: string, serverId: string, cols: number, rows: number) =>
+      invoke<boolean>(IPC.sshConnect, sessionId, serverId, cols, rows),
+    data: (sessionId: string, data: string) => ipcRenderer.send(IPC.sshData, sessionId, data),
+    resize: (sessionId: string, cols: number, rows: number) => ipcRenderer.send(IPC.sshResize, sessionId, cols, rows),
+    disconnect: (sessionId: string) => ipcRenderer.send(IPC.sshDisconnect, sessionId),
+    exec: (serverId: string, command: string) =>
+      invoke<{ stdout: string; stderr: string; code: number }>(IPC.sshExec, serverId, command),
+    onData: (sessionId: string, cb: (data: string) => void) => {
+      const ch = `data:${sessionId}`
+      const listener = (_e: unknown, payload: string): void => cb(payload)
+      ipcRenderer.on(ch, listener)
+      return () => {
+        ipcRenderer.removeListener(ch, listener)
+      }
+    },
+    onStatus: (sessionId: string, cb: (payload: { status: string; message?: string }) => void) => {
+      const ch = `status:${sessionId}`
+      const listener = (_e: unknown, payload: { status: string; message?: string }): void => cb(payload)
+      ipcRenderer.on(ch, listener)
+      return () => {
+        ipcRenderer.removeListener(ch, listener)
+      }
+    }
+  },
+  sftp: {
+    list: (serverId: string, path: string) => invoke<SftpEntry[]>(IPC.sftpList, serverId, path),
+    download: (serverId: string, remote: string) => invoke<string | false>(IPC.sftpDownload, serverId, remote),
+    upload: (serverId: string, remoteDir: string) => invoke<number | false>(IPC.sftpUpload, serverId, remoteDir),
+    mkdir: (serverId: string, path: string) => invoke<boolean>(IPC.sftpMkdir, serverId, path),
+    remove: (serverId: string, path: string, isDir: boolean) => invoke<boolean>(IPC.sftpRemove, serverId, path, isDir),
+    rename: (serverId: string, from: string, to: string) => invoke<boolean>(IPC.sftpRename, serverId, from, to),
+    readFile: (serverId: string, path: string) => invoke<string>(IPC.sftpReadFile, serverId, path),
+    writeFile: (serverId: string, path: string, content: string) =>
+      invoke<boolean>(IPC.sftpWriteFile, serverId, path, content)
+  },
+  tunnel: {
+    start: (rule: TunnelRule) => invoke<boolean>(IPC.tunnelStart, rule),
+    stop: (ruleId: string) => invoke<boolean>(IPC.tunnelStop, ruleId),
+    onStatus: (ruleId: string, cb: (payload: { status: string; message?: string }) => void) => {
+      const ch = `tunnel:${ruleId}`
+      const listener = (_e: unknown, payload: { status: string; message?: string }): void => cb(payload)
+      ipcRenderer.on(ch, listener)
+      return () => {
+        ipcRenderer.removeListener(ch, listener)
+      }
+    }
+  },
+  updates: {
+    check: () => invoke<boolean>(IPC.updateCheck),
+    download: () => invoke<boolean>(IPC.updateDownload),
+    install: () => invoke<boolean>(IPC.updateInstall),
+    version: () => invoke<string>(IPC.updateGetVersion),
+    onStatus: (cb: (status: UpdateStatus) => void) => {
+      const listener = (_e: unknown, payload: UpdateStatus): void => cb(payload)
+      ipcRenderer.on(IPC.updateOnStatus, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC.updateOnStatus, listener)
+      }
+    }
+  },
+  window: {
+    minimize: () => ipcRenderer.send(IPC.windowMinimize),
+    maximize: () => ipcRenderer.send(IPC.windowMaximize),
+    close: () => ipcRenderer.send(IPC.windowClose)
+  }
+}
+
+contextBridge.exposeInMainWorld('janus', api)
+
+export type JanusApi = typeof api
