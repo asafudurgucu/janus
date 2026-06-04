@@ -39,9 +39,9 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
       setLoading(true)
       setError(null)
       try {
-        const list = await window.janus.sftp.list(serverId, target)
+        const { cwd, entries: list } = await window.janus.sftp.list(serverId, target)
         setEntries(list)
-        setPath(target)
+        setPath(cwd) // always the resolved absolute path
         setTabStatus(tab.id, 'connected')
       } catch (e) {
         setError((e as Error).message)
@@ -59,7 +59,7 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
   }, [])
 
   function up(): void {
-    if (path === '/' || path === '.') return
+    if (path === '/') return
     const parent = path.replace(/\/+$/, '').split('/').slice(0, -1).join('/') || '/'
     load(parent)
   }
@@ -77,7 +77,7 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
     }
   }
 
-  const displayPath = path === '.' ? '~ (ev dizini)' : path
+  const displayPath = path || '/'
 
   return (
     <div className="flex h-full flex-col bg-ink-900">

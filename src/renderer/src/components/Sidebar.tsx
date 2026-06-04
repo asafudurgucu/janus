@@ -20,6 +20,19 @@ import {
 import { useStore } from '../store'
 import type { ServerProfile, Group } from '@shared/types'
 
+interface DragItem {
+  kind: 'server' | 'group'
+  id: string
+}
+function readDrag(e: React.DragEvent): DragItem | null {
+  try {
+    const raw = e.dataTransfer.getData('application/janus')
+    return raw ? (JSON.parse(raw) as DragItem) : null
+  } catch {
+    return null
+  }
+}
+
 const railItems = [
   { key: 'servers', icon: Server, label: 'Sunucular' },
   { key: 'snippets', icon: Code2, label: 'Snippet\'ler' },
@@ -37,7 +50,9 @@ export default function Sidebar(): JSX.Element {
     activeTagFilter,
     setTagFilter,
     openServerForm,
-    openGroupForm
+    openGroupForm,
+    moveServerToGroup,
+    moveGroupToParent
   } = useStore()
 
   const servers = vault?.servers ?? []
@@ -120,7 +135,16 @@ export default function Sidebar(): JSX.Element {
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto py-1">
+          <div
+            className="min-h-0 flex-1 overflow-y-auto py-1"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              const item = readDrag(e)
+              if (item?.kind === 'server') moveServerToGroup(item.id, null)
+              else if (item?.kind === 'group') moveGroupToParent(item.id, null)
+            }}
+          >
             <ServerTree servers={filtered} groups={groups} flat={!!search || !!activeTagFilter} />
             {servers.length === 0 && (
               <div className="px-4 py-10 text-center text-xs text-slate-500">
@@ -188,15 +212,41 @@ function GroupNode({
   servers: ServerProfile[]
   depth: number
 }): JSX.Element {
-  const { toggleGroup, openGroupForm, deleteGroup, openServerForm } = useStore()
+  const { toggleGroup, openGroupForm, deleteGroup, openServerForm, moveServerToGroup, moveGroupToParent } = useStore()
+  const [over, setOver] = useState(false)
   const children = groups.filter((g) => g.parentId === group.id).sort((a, b) => a.order - b.order)
   const childServers = servers.filter((s) => s.groupId === group.id)
   const count = childServers.length
 
+  function handleDrop(e: React.DragEvent): void {
+    e.preventDefault()
+    e.stopPropagation()
+    setOver(false)
+    const item = readDrag(e)
+    if (!item) return
+    if (item.kind === 'server') moveServerToGroup(item.id, group.id)
+    else if (item.kind === 'group') moveGroupToParent(item.id, group.id)
+  }
+
   return (
     <div>
       <div
-        className="group flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-sm hover:bg-ink-700"
+        draggable
+        onDragStart={(e) => {
+          e.stopPropagation()
+          e.dataTransfer.setData('application/janus', JSON.stringify({ kind: 'group', id: group.id }))
+          e.dataTransfer.effectAllowed = 'move'
+        }}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (!over) setOver(true)
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={handleDrop}
+        className={`group flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-sm hover:bg-ink-700 ${
+          over ? 'bg-accent/20 ring-1 ring-accent' : ''
+        }`}
         style={{ paddingLeft: depth * 12 + 6 }}
         onClick={() => toggleGroup(group.id)}
       >
@@ -231,13 +281,28 @@ function GroupNode({
 }
 
 function ServerRow({ server, depth }: { server: ServerProfile; depth: number }): JSX.Element {
-  const { selectedServerId, selectServer, openTerminal, openSftp, openServerForm, deleteServer, duplicateServer } =
+  const { selectedServerId, selectServer, openTerminal, openSftp, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
     useStore()
   const [menu, setMenu] = useState(false)
   const selected = selectedServerId === server.id
 
   return (
     <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('application/janus', JSON.stringify({ kind: 'server', id: server.id }))
+        e.dataTransfer.effectAllowed = 'move'
+      }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const item = readDrag(e)
+        if (item?.kind === 'server' && item.id !== server.id) moveServerToGroup(item.id, server.groupId)
+      }}
       className={`group relative flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm ${
         selected ? 'bg-accent/15 text-white' : 'text-slate-300 hover:bg-ink-700'
       }`}

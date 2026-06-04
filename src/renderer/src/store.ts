@@ -10,6 +10,26 @@ import type {
   SessionStatus
 } from '@shared/types'
 
+// --- Lightweight UI-preference persistence (localStorage). NEVER store the
+// vault here — only non-sensitive UI state so the app remembers where you were.
+const LS_KEY = 'janus.ui'
+function loadPrefs(): { sidePanel?: UIState['sidePanel']; selectedServerId?: string | null } {
+  try {
+    return JSON.parse(localStorage.getItem(LS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+function savePrefs(patch: Record<string, unknown>): void {
+  try {
+    const cur = loadPrefs()
+    localStorage.setItem(LS_KEY, JSON.stringify({ ...cur, ...patch }))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+const prefs = loadPrefs()
+
 export type TabKind = 'terminal' | 'sftp'
 
 export interface Tab {
@@ -66,6 +86,10 @@ interface Actions {
   deleteGroup: (id: string) => Promise<void>
   toggleGroup: (id: string) => Promise<void>
 
+  // drag & drop
+  moveServerToGroup: (serverId: string, groupId: string | null) => Promise<void>
+  moveGroupToParent: (groupId: string, parentId: string | null) => Promise<void>
+
   // snippet CRUD
   upsertSnippet: (s: Snippet) => Promise<void>
   deleteSnippet: (id: string) => Promise<void>
@@ -106,10 +130,10 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   loading: true,
   error: null,
 
-  selectedServerId: null,
+  selectedServerId: prefs.selectedServerId ?? null,
   search: '',
   activeTagFilter: null,
-  sidePanel: 'servers',
+  sidePanel: prefs.sidePanel ?? 'servers',
 
   editingServer: null,
   serverFormOpen: false,
@@ -216,6 +240,34 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     await get().persist()
   },
 
+  async moveServerToGroup(serverId, groupId) {
+    const v = get().vault
+    if (!v) return
+    const srv = v.servers.find((s) => s.id === serverId)
+    if (!srv || srv.groupId === groupId) return
+    set({
+      vault: {
+        ...v,
+        servers: v.servers.map((s) => (s.id === serverId ? { ...s, groupId, updatedAt: Date.now() } : s))
+      }
+    })
+    await get().persist()
+  },
+
+  async moveGroupToParent(groupId, parentId) {
+    const v = get().vault
+    if (!v) return
+    if (groupId === parentId) return
+    // Prevent cycles: parentId must not be a descendant of groupId.
+    let p: string | null = parentId
+    while (p) {
+      if (p === groupId) return // would create a loop
+      p = v.groups.find((g) => g.id === p)?.parentId ?? null
+    }
+    set({ vault: { ...v, groups: v.groups.map((g) => (g.id === groupId ? { ...g, parentId } : g)) } })
+    await get().persist()
+  },
+
   async upsertSnippet(s) {
     const v = get().vault
     if (!v) return
@@ -257,8 +309,14 @@ export const useStore = create<UIState & Actions>((set, get) => ({
 
   setSearch: (q) => set({ search: q }),
   setTagFilter: (t) => set({ activeTagFilter: t }),
-  setSidePanel: (p) => set({ sidePanel: p }),
-  selectServer: (id) => set({ selectedServerId: id }),
+  setSidePanel: (p) => {
+    savePrefs({ sidePanel: p })
+    set({ sidePanel: p })
+  },
+  selectServer: (id) => {
+    savePrefs({ selectedServerId: id })
+    set({ selectedServerId: id })
+  },
   openServerForm: (server) => set({ serverFormOpen: true, editingServer: server ?? null }),
   closeServerForm: () => set({ serverFormOpen: false, editingServer: null }),
   openGroupForm: (group) => set({ groupFormOpen: true, editingGroup: group ?? null }),

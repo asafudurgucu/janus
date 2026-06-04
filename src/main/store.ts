@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { readFile, writeFile, mkdir, access } from 'fs/promises'
+import { readFile, writeFile, mkdir, access, rename } from 'fs/promises'
 import { constants } from 'fs'
 import { join, dirname } from 'path'
 import { encryptVault, decryptVault, EncryptedFile } from './crypto'
@@ -108,17 +108,11 @@ class VaultStore {
     const file = encryptVault(JSON.stringify(this.cache), this.password)
     const dir = dirname(this.filePath)
     await mkdir(dir, { recursive: true })
-    const tmp = this.filePath + '.tmp'
+    // Write to a temp file then atomically rename over the real one. This way a
+    // crash mid-write can never corrupt the existing vault.
+    const tmp = `${this.filePath}.tmp`
     await writeFile(tmp, JSON.stringify(file, null, 2), 'utf8')
-    // Atomic-ish replace.
-    await writeFile(this.filePath, JSON.stringify(file, null, 2), 'utf8')
-    try {
-      await access(tmp)
-      const { unlink } = await import('fs/promises')
-      await unlink(tmp)
-    } catch {
-      /* ignore */
-    }
+    await rename(tmp, this.filePath)
   }
 
   /** Ensure required arrays/fields exist (forward-compat for older files). */

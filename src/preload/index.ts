@@ -46,7 +46,8 @@ const api = {
     }
   },
   sftp: {
-    list: (serverId: string, path: string) => invoke<SftpEntry[]>(IPC.sftpList, serverId, path),
+    list: (serverId: string, path: string) =>
+      invoke<{ cwd: string; entries: SftpEntry[] }>(IPC.sftpList, serverId, path),
     download: (serverId: string, remote: string) => invoke<string | false>(IPC.sftpDownload, serverId, remote),
     upload: (serverId: string, remoteDir: string) => invoke<number | false>(IPC.sftpUpload, serverId, remoteDir),
     mkdir: (serverId: string, path: string) => invoke<boolean>(IPC.sftpMkdir, serverId, path),

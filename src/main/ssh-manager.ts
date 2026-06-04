@@ -207,14 +207,22 @@ export class SSHManager {
     })
   }
 
-  async sftpList(profile: ServerProfile, path: string, jump?: ServerProfile | null): Promise<SftpEntry[]> {
+  async sftpList(
+    profile: ServerProfile,
+    path: string,
+    jump?: ServerProfile | null
+  ): Promise<{ cwd: string; entries: SftpEntry[] }> {
     const client = await this.getSftpClient(profile, jump)
     const sftp = await this.sftp(client)
-    const norm = path || '.'
+    // Resolve to an absolute, canonical path so ".", "~" and ".." all work and
+    // navigating to the parent directory is always reliable.
+    const cwd = await new Promise<string>((res, rej) =>
+      sftp.realpath(path && path.trim() ? path : '.', (e, abs) => (e ? rej(e) : res(abs)))
+    )
     return new Promise((resolve, reject) => {
-      sftp.readdir(norm, (err, list) => {
+      sftp.readdir(cwd, (err, list) => {
         if (err) return reject(err)
-        const base = norm.endsWith('/') ? norm : norm + '/'
+        const base = cwd.endsWith('/') ? cwd : cwd + '/'
         const entries: SftpEntry[] = list.map((e) => {
           const m = e.attrs.mode
           let type: SftpEntry['type'] = 'other'
@@ -237,7 +245,7 @@ export class SSHManager {
           if (a.type !== 'directory' && b.type === 'directory') return 1
           return a.name.localeCompare(b.name)
         })
-        resolve(entries)
+        resolve({ cwd, entries })
       })
     })
   }

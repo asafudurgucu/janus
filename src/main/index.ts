@@ -1,13 +1,37 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, Rectangle } from 'electron'
 import { join } from 'path'
+import { readFileSync, writeFileSync } from 'fs'
 import { registerIpc } from './ipc'
 
 let mainWindow: BrowserWindow | null = null
 
+// --- Window bounds memory ------------------------------------------------
+const boundsFile = (): string => join(app.getPath('userData'), 'window-state.json')
+
+function loadBounds(): Partial<Rectangle> | null {
+  try {
+    return JSON.parse(readFileSync(boundsFile(), 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+function saveBounds(): void {
+  if (!mainWindow || mainWindow.isMinimized()) return
+  try {
+    writeFileSync(boundsFile(), JSON.stringify(mainWindow.getBounds()), 'utf8')
+  } catch {
+    /* ignore */
+  }
+}
+
 function createWindow(): void {
+  const saved = loadBounds()
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    width: saved?.width ?? 1280,
+    height: saved?.height ?? 820,
+    x: saved?.x,
+    y: saved?.y,
     minWidth: 920,
     minHeight: 600,
     show: false,
@@ -24,6 +48,10 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => mainWindow?.show())
+  // Remember size/position.
+  mainWindow.on('resize', saveBounds)
+  mainWindow.on('move', saveBounds)
+  mainWindow.on('close', saveBounds)
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)

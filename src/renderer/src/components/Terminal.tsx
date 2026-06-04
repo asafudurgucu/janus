@@ -75,12 +75,26 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
     })
 
     const sessionId = tab.id
+    const server = vault?.servers.find((s) => s.id === tab.serverId)
+    const target = server ? `${server.username}@${server.host}:${server.port}` : tab.serverId
+
+    // Immediate feedback so the connecting phase never looks frozen.
+    const dim = (s: string): void => term.writeln(`\x1b[38;5;245m${s}\x1b[0m`)
+    dim(`╭─ Janus · ${server?.name ?? ''}`)
+    dim(`│  ${target} üzerine bağlanılıyor…`)
+    if (server?.jumpHostId) dim('│  jump host üzerinden')
+    dim('│  SSH anahtarı/parola doğrulanıyor…')
+    const t0 = Date.now()
+
     const keyDisposable = term.onData((d) => window.janus.ssh.data(sessionId, d))
     const offData = window.janus.ssh.onData(sessionId, (data) => term.write(data))
     const offStatus = window.janus.ssh.onStatus(sessionId, (p) => {
       setTabStatus(sessionId, p.status as Tab['status'])
+      if (p.status === 'connected') {
+        dim(`╰─ \x1b[32m● bağlandı\x1b[38;5;245m (${Date.now() - t0} ms)\x1b[0m\r\n`)
+      }
       if (p.status === 'error' && p.message) {
-        term.writeln(`\r\n\x1b[31m✖ Bağlantı hatası: ${p.message}\x1b[0m`)
+        term.writeln(`╰─ \x1b[31m✖ Bağlantı hatası: ${p.message}\x1b[0m`)
       }
       if (p.status === 'disconnected') {
         term.writeln('\r\n\x1b[33m⚠ Bağlantı kapandı.\x1b[0m')
@@ -90,7 +104,7 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
     const { cols, rows } = term
     window.janus.ssh
       .connect(sessionId, tab.serverId, cols, rows)
-      .catch((e) => term.writeln(`\r\n\x1b[31m✖ ${(e as Error).message}\x1b[0m`))
+      .catch((e) => term.writeln(`╰─ \x1b[31m✖ ${(e as Error).message}\x1b[0m`))
 
     const resize = (): void => {
       try {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Settings, Type, ShieldCheck, Download, Upload, KeyRound, Check, AlertCircle, RefreshCw } from 'lucide-react'
+import { Settings, Type, ShieldCheck, Download, Upload, KeyRound, Check, AlertCircle, RefreshCw, Linkedin } from 'lucide-react'
 import { useStore } from '../store'
 
 export default function SettingsPanel(): JSX.Element {
@@ -118,6 +118,19 @@ function AboutSection(): JSX.Element {
         </button>
       </div>
       {note && <p className="mt-2 text-xs text-slate-500">{note}</p>}
+
+      <div className="mt-4 flex items-center justify-between border-t border-ink-600 pt-4">
+        <span className="text-xs text-slate-500">
+          a product of <span className="font-semibold text-slate-300">The Asaf Effect</span>
+        </span>
+        <button
+          onClick={() => window.open('https://www.linkedin.com/in/asaf-üdürgücü-a55a4a1b8/')}
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-slate-400 transition-colors hover:bg-ink-600 hover:text-accent"
+          title="LinkedIn"
+        >
+          <Linkedin size={14} /> asaf üdürgücü
+        </button>
+      </div>
     </Section>
   )
 }

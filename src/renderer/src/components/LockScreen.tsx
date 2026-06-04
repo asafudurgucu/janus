@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { KeyRound, Upload, AlertCircle } from 'lucide-react'
 import { useStore } from '../store'
-import logo from '../assets/logo.jpg'
+import logo from '../assets/logo.png'
 
 export default function LockScreen(): JSX.Element {
   const { hasVault, createVault, unlock } = useStore()
@@ -125,6 +125,10 @@ export default function LockScreen(): JSX.Element {
             yalnızca dosyayı AES-256-GCM ile şifreler.
           </p>
         )}
+      </div>
+
+      <div className="absolute bottom-5 left-0 right-0 text-center text-[11px] tracking-wide text-slate-600">
+        The Asaf Effect · 2026
       </div>
     </div>
   )
