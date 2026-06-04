@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ShieldCheck, KeyRound, Upload, AlertCircle } from 'lucide-react'
+import { KeyRound, Upload, AlertCircle } from 'lucide-react'
 import { useStore } from '../store'
+import logo from '../assets/logo.jpg'
 
 export default function LockScreen(): JSX.Element {
   const { hasVault, createVault, unlock } = useStore()
@@ -50,10 +51,15 @@ export default function LockScreen(): JSX.Element {
       {/* subtle ambient glow */}
       <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[640px] -translate-x-1/2 rounded-full bg-accent/10 blur-[120px]" />
       <div className="relative w-[396px] rounded-2xl border border-ink-600 bg-ink-800/70 p-8 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-        <div className="mb-7 flex flex-col items-center gap-4 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-            <ShieldCheck size={26} />
-          </div>
+        <div className="mb-7 flex flex-col items-center gap-3 text-center">
+          {/* Brand wordmark — black background drops out via screen blend. */}
+          <img
+            src={logo}
+            alt="Janus"
+            className="h-24 w-auto select-none"
+            style={{ mixBlendMode: 'screen' }}
+            draggable={false}
+          />
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-white">
               {isCreate ? 'Vault oluştur' : 'Tekrar hoş geldin'}
