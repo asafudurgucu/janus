@@ -19,7 +19,8 @@ import {
   LayoutDashboard,
   Radio,
   Box,
-  ScrollText
+  ScrollText,
+  Monitor
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerProfile, Group } from '@shared/types'
@@ -287,7 +288,7 @@ function GroupNode({
 }
 
 function ServerRow({ server, depth }: { server: ServerProfile; depth: number }): JSX.Element {
-  const { selectedServerId, selectServer, openTerminal, openSftp, openDocker, openLogs, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
+  const { selectedServerId, selectServer, openTerminal, openSftp, openDocker, openLogs, openVnc, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
     useStore()
   const [menu, setMenu] = useState(false)
   const selected = selectedServerId === server.id
@@ -347,6 +348,7 @@ function ServerRow({ server, depth }: { server: ServerProfile; depth: number }):
             <MenuItem icon={FolderTree} label="SFTP aç" onClick={() => { openSftp(server.id); setMenu(false) }} />
             <MenuItem icon={Box} label="Servisler / Docker" onClick={() => { openDocker(server.id); setMenu(false) }} />
             <MenuItem icon={ScrollText} label="Loglar (canlı)" onClick={() => { openLogs(server.id); setMenu(false) }} />
+            <MenuItem icon={Monitor} label="Uzak masaüstü (VNC)" onClick={() => { openVnc(server.id); setMenu(false) }} />
             <MenuItem icon={Pencil} label="Düzenle" onClick={() => { openServerForm(server); setMenu(false) }} />
             <MenuItem icon={Copy} label="Çoğalt" onClick={() => { duplicateServer(server.id); setMenu(false) }} />
             <div className="my-1 border-t border-ink-500" />

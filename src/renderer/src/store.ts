@@ -30,7 +30,7 @@ function savePrefs(patch: Record<string, unknown>): void {
 }
 const prefs = loadPrefs()
 
-export type TabKind = 'terminal' | 'sftp' | 'docker' | 'logs'
+export type TabKind = 'terminal' | 'sftp' | 'docker' | 'logs' | 'vnc'
 
 export interface Tab {
   id: string
@@ -116,6 +116,7 @@ interface Actions {
   openSftp: (serverId: string) => void
   openDocker: (serverId: string) => void
   openLogs: (serverId: string) => void
+  openVnc: (serverId: string) => void
   closeTab: (tabId: string) => void
   closeActiveTab: () => void
   setActiveTab: (tabId: string) => void
@@ -377,6 +378,14 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     const server = v?.servers.find((s) => s.id === serverId)
     if (!server) return
     const tab: Tab = { id: uuid(), kind: 'logs', serverId, title: `Loglar · ${server.name}`, status: 'connecting' }
+    set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
+  },
+
+  openVnc(serverId) {
+    const v = get().vault
+    const server = v?.servers.find((s) => s.id === serverId)
+    if (!server) return
+    const tab: Tab = { id: uuid(), kind: 'vnc', serverId, title: `Masaüstü · ${server.name}`, status: 'connecting' }
     set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
   },
 

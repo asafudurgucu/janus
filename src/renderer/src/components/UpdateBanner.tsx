@@ -64,7 +64,15 @@ export default function UpdateBanner(): JSX.Element | null {
             <RefreshCw size={13} /> Yeniden başlat & kur
           </button>
         )}
-        {phase === 'error' && (
+        {phase === 'error' && status.manualOnly && (
+          <button
+            onClick={() => window.open('https://asafudurgucu.github.io/janus/')}
+            className="btn-primary flex-1 py-1.5 text-xs"
+          >
+            <Download size={13} /> Siteden indir
+          </button>
+        )}
+        {phase === 'error' && !status.manualOnly && (
           <button onClick={() => window.janus.updates.check()} className="btn-ghost flex-1 border border-ink-500 py-1.5 text-xs">
             <RefreshCw size={13} /> Tekrar dene
           </button>

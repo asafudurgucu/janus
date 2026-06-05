@@ -111,6 +111,10 @@ const api = {
     touchIdAvailable: () => invoke<boolean>(IPC.touchIdAvailable),
     touchIdPrompt: (reason: string) => invoke<boolean>(IPC.touchIdPrompt, reason)
   },
+  vnc: {
+    start: (sessionId: string, serverId: string) => invoke<number>(IPC.vncStart, sessionId, serverId),
+    stop: (sessionId: string) => ipcRenderer.send(IPC.vncStop, sessionId)
+  },
   updates: {
     check: () => invoke<boolean>(IPC.updateCheck),
     download: () => invoke<boolean>(IPC.updateDownload),

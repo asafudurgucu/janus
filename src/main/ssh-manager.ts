@@ -1,6 +1,7 @@
 import { Client, ConnectConfig } from 'ssh2'
 import type { ClientChannel } from 'ssh2'
 import { createServer, Server, Socket, connect as netConnect } from 'net'
+import { WebSocketServer, WebSocket } from 'ws'
 import type { ServerProfile, TunnelRule, SftpEntry, SessionStatus, ServerMetrics } from '@shared/types'
 
 type Emit = (channel: string, payload: unknown) => void
@@ -233,6 +234,57 @@ export class SSHManager {
     if (c) {
       c.end()
       this.streams.delete(streamId)
+    }
+  }
+
+  // ---------------- VNC remote desktop (WS↔TCP bridge over SSH) ----------------
+
+  private vncServers = new Map<string, WebSocketServer>()
+
+  /**
+   * Open a localhost WebSocket bridge that pipes a noVNC client (renderer) to
+   * the server's VNC port (127.0.0.1:vncPort on the server) through SSH.
+   * Returns the local WS port the renderer should connect to.
+   */
+  async startVnc(sessionId: string, profile: ServerProfile, jump?: ServerProfile | null): Promise<number> {
+    this.stopVnc(sessionId)
+    const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+    this.vncServers.set(sessionId, wss)
+    await new Promise<void>((resolve) => wss.once('listening', () => resolve()))
+    const addr = wss.address()
+    const port = typeof addr === 'object' && addr ? addr.port : 0
+
+    wss.on('connection', (ws) => {
+      this.connectClient(profile, jump)
+        .then((client) => {
+          client.forwardOut('127.0.0.1', 0, '127.0.0.1', profile.vncPort || 5900, (err, stream) => {
+            if (err) {
+              ws.close()
+              client.end()
+              return
+            }
+            ws.on('message', (data: Buffer) => stream.write(data))
+            stream.on('data', (d: Buffer) => {
+              if (ws.readyState === WebSocket.OPEN) ws.send(d)
+            })
+            stream.on('close', () => ws.close())
+            ws.on('close', () => {
+              stream.end()
+              client.end()
+            })
+          })
+        })
+        .catch(() => ws.close())
+    })
+    return port
+  }
+
+  stopVnc(sessionId: string): void {
+    const wss = this.vncServers.get(sessionId)
+    if (wss) {
+      wss.clients.forEach((c) => c.close())
+      wss.close()
+      this.vncServers.delete(sessionId)
     }
   }
 
@@ -514,6 +566,7 @@ export class SSHManager {
     for (const id of [...this.shells.keys()]) this.disconnect(id)
     for (const id of [...this.tunnels.keys()]) this.stopTunnel(id)
     for (const id of [...this.streams.keys()]) this.stopStream(id)
+    for (const id of [...this.vncServers.keys()]) this.stopVnc(id)
     for (const [, c] of this.sftpClients) c.end()
     this.sftpClients.clear()
   }

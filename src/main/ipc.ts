@@ -127,6 +127,13 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   })
   ipcMain.on(IPC.streamStop, (_e, streamId: string) => ssh.stopStream(streamId))
 
+  // ---- VNC remote desktop ----
+  handle(IPC.vncStart, async (sessionId, serverId) => {
+    const profile = findServer(serverId as string)
+    return ssh.startVnc(sessionId as string, profile, jumpFor(profile))
+  })
+  ipcMain.on(IPC.vncStop, (_e, sessionId: string) => ssh.stopVnc(sessionId))
+
   // ---- System integration (Touch ID) ----
   handle(IPC.touchIdAvailable, async () => process.platform === 'darwin' && systemPreferences.canPromptTouchID())
   handle(IPC.touchIdPrompt, async (reason) => {

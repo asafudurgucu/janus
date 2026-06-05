@@ -35,6 +35,10 @@ export const IPC = {
   touchIdAvailable: 'sys:touchid-available',
   touchIdPrompt: 'sys:touchid-prompt',
 
+  // VNC remote desktop (WS↔TCP bridge, tunneled over SSH)
+  vncStart: 'vnc:start',
+  vncStop: 'vnc:stop',
+
   // SSH session events (main -> renderer, prefixed with session id)
   sshOnData: 'ssh:on-data',
   sshOnStatus: 'ssh:on-status',

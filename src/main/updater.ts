@@ -33,6 +33,16 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null): void {
       send({ phase: 'not-available' })
       return
     }
+    // Unsigned macOS build: Squirrel.Mac can't validate the signature. In-app
+    // install is impossible without code signing → guide to manual download.
+    if (msg.includes('code signature') || msg.includes('did not pass validation') || msg.includes('Could not get code signature')) {
+      send({
+        phase: 'error',
+        error: 'macOS otomatik güncellemesi kod imzası gerektiriyor. Yeni sürümü indirme sayfasından kur.',
+        manualOnly: true
+      })
+      return
+    }
     send({ phase: 'error', error: msg })
   })
 

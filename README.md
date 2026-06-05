@@ -19,6 +19,7 @@
 - 📡 **Broadcast** — bir komutu birden çok sunucuda aynı anda çalıştır, çıktıları yan yana.
 - 🐳 **Docker & systemd & süreç yönetimi** — konteyner/servis başlat-durdur-restart, process kill.
 - 📜 **Canlı log akışı** — `tail -f` / `journalctl -f` ile uzak logları gerçek zamanlı izle, filtrele.
+- 🖥️ **Uzak masaüstü (VNC)** — sunucunun ekranına SSH tüneli üzerinden şifreli bağlan, fare/klavye kontrolü (noVNC).
 - 🩺 **Sunucu sağlık metrikleri** — RAM/disk/load/uptime + sağlık rozeti.
 - 🔑 **SSH anahtar yöneticisi** — uygulama içinde anahtar üret, sunucuya tek tıkla kur.
 - 🎨 **5 tema** (Midnight/Carbon/Ocean/Plum/Forest), 🔁 **otomatik yeniden bağlanma**,

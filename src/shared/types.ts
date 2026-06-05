@@ -24,6 +24,9 @@ export interface ServerProfile {
   jumpHostId?: string | null
   /** Keepalive interval in seconds (0 = off). */
   keepaliveInterval?: number
+  /** Remote desktop (VNC) — port on the server (default 5900) and optional password. */
+  vncPort?: number
+  vncPassword?: string
   createdAt: number
   updatedAt: number
   lastConnectedAt?: number
@@ -173,6 +176,7 @@ export interface UpdateStatus {
   releaseNotes?: string
   percent?: number
   error?: string
+  manualOnly?: boolean // update must be installed manually (e.g. unsigned macOS)
 }
 
 // ---- SSH key generation ----

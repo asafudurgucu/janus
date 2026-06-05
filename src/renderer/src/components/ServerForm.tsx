@@ -24,6 +24,8 @@ function blank(partial?: Partial<ServerProfile>): ServerProfile {
     notes: '',
     jumpHostId: null,
     keepaliveInterval: 30,
+    vncPort: 5900,
+    vncPassword: '',
     createdAt: Date.now(),
     updatedAt: Date.now(),
     ...partial
@@ -258,6 +260,28 @@ export default function ServerForm(): JSX.Element {
               />
             ))}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-ink-600 bg-ink-900/40 p-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Uzak Masaüstü (VNC)</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">VNC portu</label>
+              <input
+                type="number"
+                value={form.vncPort ?? 5900}
+                onChange={(e) => set('vncPort', Number(e.target.value) || 5900)}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="label">VNC parolası</label>
+              <input type="password" value={form.vncPassword} onChange={(e) => set('vncPassword', e.target.value)} className="field" placeholder="opsiyonel" />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-600">
+            Bağlantı SSH tüneli üzerinden sunucuda <span className="font-mono">127.0.0.1:{form.vncPort ?? 5900}</span>'a yapılır. VNC sunucusu çalışıyor olmalı.
+          </p>
         </div>
 
         <div>

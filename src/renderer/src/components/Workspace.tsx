@@ -1,9 +1,10 @@
-import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, X } from 'lucide-react'
+import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, Monitor, X } from 'lucide-react'
 import { useStore } from '../store'
 import TerminalView from './Terminal'
 import SftpPanel from './SftpPanel'
 import DockerPanel from './DockerPanel'
 import LogsPanel from './LogsPanel'
+import VncPanel from './VncPanel'
 import SnippetsPanel from './SnippetsPanel'
 import TunnelsPanel from './TunnelsPanel'
 import SettingsPanel from './SettingsPanel'
@@ -12,7 +13,7 @@ import BroadcastPanel from './BroadcastPanel'
 import ServerDetail from './ServerDetail'
 import type { Tab } from '../store'
 
-const TAB_ICON = { terminal: TerminalIcon, sftp: FolderTree, docker: Box, logs: ScrollText } as const
+const TAB_ICON = { terminal: TerminalIcon, sftp: FolderTree, docker: Box, logs: ScrollText, vnc: Monitor } as const
 
 function statusColor(status: Tab['status']): string {
   switch (status) {
@@ -84,8 +85,10 @@ export default function Workspace(): JSX.Element {
                 <SftpPanel tab={tab} />
               ) : tab.kind === 'docker' ? (
                 <DockerPanel tab={tab} />
-              ) : (
+              ) : tab.kind === 'logs' ? (
                 <LogsPanel tab={tab} />
+              ) : (
+                <VncPanel tab={tab} />
               )}
             </div>
           ))
