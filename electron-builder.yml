@@ -41,6 +41,7 @@ nsis:
 linux:
   icon: build/icon.png
   category: Development
+  maintainer: Asaf Üdürgücü <asafudurgucu1@gmail.com>
   target:
     - AppImage
     - deb
