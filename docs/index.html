@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Janus — Profesyonel SSH & Sunucu Yöneticisi</title>
+    <meta name="description" content="Janus — Termius'tan daha iyi, şifreli tek dosyalı SSH & sunucu yöneticisi. Terminal, SFTP, tüneller, filo paneli, broadcast. The Asaf Effect." />
+    <meta property="og:title" content="Janus — SSH & Server Manager" />
+    <meta property="og:description" content="Profesyonel SSH & sunucu yöneticisi. The Asaf Effect." />
+    <link rel="icon" href="icon.png" />
+    <style>
+      :root {
+        --bg: #0a0b0d;
+        --panel: #0f1113;
+        --border: #1d2024;
+        --text: #e4e7ec;
+        --muted: #8b93a1;
+        --accent: #6366f1;
+        --accent-soft: #818cf8;
+        --red: #fb5d6b;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        background: var(--bg); color: var(--text);
+        -webkit-font-smoothing: antialiased; line-height: 1.6;
+        overflow-x: hidden;
+      }
+      a { color: inherit; text-decoration: none; }
+      .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+      .glow {
+        position: fixed; top: -260px; left: 50%; transform: translateX(-50%);
+        width: 900px; height: 520px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%);
+        filter: blur(40px); pointer-events: none; z-index: 0;
+      }
+      header { position: relative; z-index: 1; text-align: center; padding: 90px 0 40px; }
+      .logo { height: 140px; width: auto; mix-blend-mode: screen; margin: 0 auto 8px; display: block; }
+      .tagline { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 12px; }
+      .sub { color: var(--muted); font-size: 17px; max-width: 560px; margin: 12px auto 0; }
+      .downloads { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 36px 0 8px; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: var(--accent); color: #fff; font-weight: 600; font-size: 15px;
+        padding: 13px 22px; border-radius: 12px; border: none; cursor: pointer;
+        transition: transform .12s, background .12s; box-shadow: 0 8px 24px -8px rgba(99,102,241,.5);
+      }
+      .btn:hover { background: var(--accent-soft); transform: translateY(-1px); }
+      .btn.ghost { background: transparent; border: 1px solid var(--border); box-shadow: none; color: var(--text); }
+      .btn.ghost:hover { background: var(--panel); }
+      .btn small { opacity: .65; font-weight: 500; }
+      .platform-note { color: var(--muted); font-size: 13px; margin-top: 10px; }
+      .ver { color: var(--muted); font-size: 13px; margin-top: 22px; }
+      .ver b { color: var(--accent-soft); }
+
+      section { position: relative; z-index: 1; padding: 56px 0; }
+      h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 28px; text-align: center; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+      .card .ico { font-size: 22px; margin-bottom: 10px; }
+      .card h3 { font-size: 16px; margin-bottom: 6px; }
+      .card p { color: var(--muted); font-size: 14px; }
+
+      footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 32px 0 48px; text-align: center; color: var(--muted); font-size: 14px; }
+      footer .links { display: flex; gap: 18px; justify-content: center; margin-bottom: 14px; }
+      footer a:hover { color: var(--accent-soft); }
+      .brand { color: var(--text); font-weight: 600; }
+      .red { color: var(--red); }
+      .shot { display:block; margin: 36px auto 0; max-width: 100%; border:1px solid var(--border); border-radius: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+
+    <header>
+      <div class="wrap">
+        <img class="logo" src="logo.png" alt="Janus" />
+        <div class="tagline">Sunucularına tek yerden hükmet.</div>
+        <p class="sub">
+          Profesyonel SSH & sunucu yöneticisi — şifreli tek dosya, entegre terminal, SFTP,
+          port tünelleri, filo paneli ve çoklu komut. Termius'tan daha iyi, tamamen senin.
+        </p>
+
+        <div class="downloads" id="downloads">
+          <a class="btn" href="https://github.com/asafudurgucu/janus/releases/latest">İndir</a>
+        </div>
+        <div class="platform-note" id="platform-note"></div>
+        <div class="ver" id="ver">Sürüm yükleniyor…</div>
+      </div>
+    </header>
+
+    <section class="wrap">
+      <h2>Neler var?</h2>
+      <div class="grid">
+        <div class="card"><div class="ico">🔐</div><h3>Şifreli tek dosya</h3><p>Tüm sunucuların AES-256-GCM ile tek dosyada. Master parola cihazından çıkmaz.</p></div>
+        <div class="card"><div class="ico">🖥️</div><h3>Entegre terminal</h3><p>xterm.js tabanlı çoklu sekme, arama, otomatik yeniden bağlanma.</p></div>
+        <div class="card"><div class="ico">📊</div><h3>Filo paneli</h3><p>Tüm sunucuların CPU/RAM/disk durumu canlı, tek ekranda komuta merkezi.</p></div>
+        <div class="card"><div class="ico">📡</div><h3>Broadcast</h3><p>Bir komutu onlarca sunucuda aynı anda çalıştır, çıktıları yan yana gör.</p></div>
+        <div class="card"><div class="ico">📁</div><h3>SFTP & tüneller</h3><p>Dosya transferi + local/remote/dynamic port forwarding.</p></div>
+        <div class="card"><div class="ico">🐳</div><h3>Docker & systemd</h3><p>Konteyner/servis başlat-durdur, süreç listesi, canlı log akışı.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="links">
+          <a href="https://github.com/asafudurgucu/janus">GitHub</a>
+          <a href="https://github.com/asafudurgucu/janus/releases">Sürümler</a>
+          <a href="https://www.linkedin.com/in/asaf-üdürgücü-a55a4a1b8/">LinkedIn</a>
+        </div>
+        <div>a product of <span class="brand">The Asaf Effect</span> · <span class="red">2026</span></div>
+      </div>
+    </footer>
+
+    <script>
+      const REPO = 'asafudurgucu/janus'
+      const ICONS = { mac: '🍎', win: '🪟', linux: '🐧' }
+      function detectOS() {
+        const p = navigator.platform.toLowerCase() + ' ' + navigator.userAgent.toLowerCase()
+        if (p.includes('mac')) return 'mac'
+        if (p.includes('win')) return 'win'
+        if (p.includes('linux')) return 'linux'
+        return 'other'
+      }
+      async function load() {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+          const rel = await res.json()
+          const assets = rel.assets || []
+          const find = (re) => assets.find((a) => re.test(a.name))
+          const dmgArm = find(/arm64\.dmg$/)
+          const dmgX64 = find(/x64\.dmg$/) || find(/(?<!arm64)\.dmg$/)
+          const exe = find(/\.exe$/)
+          const appimage = find(/\.AppImage$/)
+          const deb = find(/\.deb$/)
+          const os = detectOS()
+
+          const btn = (url, label, sub, primary) =>
+            url ? `<a class="btn ${primary ? '' : 'ghost'}" href="${url}">${label}${sub ? ` <small>${sub}</small>` : ''}</a>` : ''
+
+          const groups = {
+            mac: btn(dmgArm?.browser_download_url, 'macOS', 'Apple Silicon', true) + btn(dmgX64?.browser_download_url, 'macOS', 'Intel', false),
+            win: btn(exe?.browser_download_url, 'Windows', '.exe', true),
+            linux: btn(appimage?.browser_download_url, 'Linux', 'AppImage', true) + btn(deb?.browser_download_url, 'Linux', '.deb', false)
+          }
+          // Show detected OS first, then the others.
+          const order = os === 'other' ? ['mac', 'win', 'linux'] : [os, ...['mac', 'win', 'linux'].filter((x) => x !== os)]
+          document.getElementById('downloads').innerHTML = order.map((k) => groups[k]).join('') || groups.mac + groups.win + groups.linux
+          document.getElementById('ver').innerHTML = `En güncel sürüm: <b>${rel.tag_name}</b>`
+          document.getElementById('platform-note').textContent =
+            os === 'mac' ? 'İlk açılışta: sağ tık → Aç (imzasız sürüm).' : os === 'win' ? 'SmartScreen → Daha fazla bilgi → Yine de çalıştır.' : ''
+        } catch (e) {
+          document.getElementById('ver').textContent = 'Sürümler için GitHub Releases sayfasına bak.'
+        }
+      }
+      load()
+    </script>
+  </body>
+</html>

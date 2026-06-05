@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { KeyRound, Upload, AlertCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { KeyRound, Upload, AlertCircle, Fingerprint } from 'lucide-react'
 import { useStore } from '../store'
 import logo from '../assets/logo.png'
 
@@ -10,8 +10,37 @@ export default function LockScreen(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [remember, setRemember] = useState(false)
+  const [touchOk, setTouchOk] = useState(false)
 
   const isCreate = !hasVault
+
+  // Offer Touch ID when a password is remembered on this device (macOS).
+  useEffect(() => {
+    if (isCreate) return
+    ;(async () => {
+      try {
+        const status = await window.janus.vault.status()
+        const avail = await window.janus.system.touchIdAvailable()
+        setTouchOk(status.hasRemembered && avail)
+      } catch {
+        /* ignore */
+      }
+    })()
+  }, [isCreate])
+
+  async function touchUnlock(): Promise<void> {
+    setError(null)
+    setBusy(true)
+    try {
+      await window.janus.system.touchIdPrompt('Janus kilidini aç')
+      const vault = await window.janus.vault.autoUnlock()
+      useStore.setState({ vault, locked: false, hasVault: true })
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
@@ -123,6 +152,12 @@ export default function LockScreen(): JSX.Element {
             {busy ? 'Lütfen bekle…' : isCreate ? 'Vault Oluştur' : 'Kilidi Aç'}
           </button>
         </form>
+
+        {touchOk && (
+          <button onClick={touchUnlock} disabled={busy} className="btn-ghost mt-3 w-full border border-ink-500">
+            <Fingerprint size={16} /> Touch ID ile aç
+          </button>
+        )}
 
         <div className="mt-4 border-t border-ink-600 pt-4">
           <button onClick={importVault} disabled={busy} className="btn-ghost w-full text-xs">

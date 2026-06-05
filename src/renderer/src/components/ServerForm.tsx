@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Sparkles, Copy, Check, UploadCloud, Loader2 } from 'lucide-react'
 import { useStore } from '../store'
 import Modal from './Modal'
 import type { ServerProfile, AuthMethod } from '@shared/types'
@@ -34,6 +34,10 @@ export default function ServerForm(): JSX.Element {
   const { editingServer, closeServerForm, upsertServer, vault } = useStore()
   const [form, setForm] = useState<ServerProfile>(() => editingServer ? { ...blank(), ...editingServer } : blank(editingServer ?? undefined))
   const [tagInput, setTagInput] = useState('')
+  const [genPub, setGenPub] = useState('')
+  const [keyBusy, setKeyBusy] = useState<'gen' | 'install' | null>(null)
+  const [keyMsg, setKeyMsg] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const groups = vault?.groups ?? []
   const otherServers = (vault?.servers ?? []).filter((s) => s.id !== form.id)
   const isEdit = !!editingServer?.host
@@ -46,6 +50,37 @@ export default function ServerForm(): JSX.Element {
     const t = tagInput.trim()
     if (t && !form.tags.includes(t)) set('tags', [...form.tags, t])
     setTagInput('')
+  }
+
+  async function generateKey(): Promise<void> {
+    setKeyBusy('gen')
+    setKeyMsg(null)
+    try {
+      const k = await window.janus.ssh.keygen('ed25519', `janus-${form.name || 'key'}`)
+      setForm((f) => ({ ...f, privateKey: k.privateKey, passphrase: '' }))
+      setGenPub(k.publicKey)
+      setKeyMsg('Anahtar üretildi ve özel anahtar alanına yazıldı.')
+    } catch (e) {
+      setKeyMsg((e as Error).message)
+    } finally {
+      setKeyBusy(null)
+    }
+  }
+
+  // Installs the public key using the server's CURRENTLY SAVED auth (e.g. password),
+  // so you can switch a password server over to key auth in one go.
+  async function installKey(): Promise<void> {
+    if (!genPub) return
+    setKeyBusy('install')
+    setKeyMsg(null)
+    try {
+      await window.janus.ssh.installKey(form.id, genPub)
+      setKeyMsg('✓ Public key sunucuya kuruldu. Kimlik doğrulamayı "SSH Anahtarı" bırakıp kaydet.')
+    } catch (e) {
+      setKeyMsg('Kurulamadı: ' + (e as Error).message)
+    } finally {
+      setKeyBusy(null)
+    }
   }
 
   async function save(): Promise<void> {
@@ -107,6 +142,37 @@ export default function ServerForm(): JSX.Element {
 
         {form.authMethod === 'key' && (
           <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <button onClick={generateKey} disabled={!!keyBusy} className="btn-ghost border border-ink-500 text-xs">
+                {keyBusy === 'gen' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Yeni anahtar üret (ed25519)
+              </button>
+              {isEdit && genPub && (
+                <button onClick={installKey} disabled={!!keyBusy} className="btn-ghost border border-ink-500 text-xs">
+                  {keyBusy === 'install' ? <Loader2 size={14} className="animate-spin" /> : <UploadCloud size={14} />} Sunucuya kur
+                </button>
+              )}
+            </div>
+            {keyMsg && <p className="text-xs text-slate-400">{keyMsg}</p>}
+
+            {genPub && (
+              <div>
+                <label className="label flex items-center justify-between">
+                  Public key (authorized_keys)
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(genPub)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 1200)
+                    }}
+                    className="text-accent hover:underline"
+                  >
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                  </button>
+                </label>
+                <textarea readOnly value={genPub} className="field h-16 font-mono text-[10px]" />
+              </div>
+            )}
+
             <div>
               <label className="label">Özel Anahtar (PEM)</label>
               <textarea

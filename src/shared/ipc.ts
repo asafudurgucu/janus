@@ -22,6 +22,18 @@ export const IPC = {
   sshDisconnect: 'ssh:disconnect',
   sshExec: 'ssh:exec', // run a one-off command, return output
   sshMetrics: 'ssh:metrics', // gather live system metrics
+  sshKeygen: 'ssh:keygen', // generate an SSH key pair
+  sshInstallKey: 'ssh:install-key', // append a public key to authorized_keys
+
+  // Live log / command streaming
+  streamStart: 'stream:start',
+  streamStop: 'stream:stop',
+  streamOnData: 'stream:on-data',
+  streamOnStatus: 'stream:on-status',
+
+  // System integration
+  touchIdAvailable: 'sys:touchid-available',
+  touchIdPrompt: 'sys:touchid-prompt',
 
   // SSH session events (main -> renderer, prefixed with session id)
   sshOnData: 'ssh:on-data',

@@ -15,7 +15,9 @@ import {
   HardDrive,
   RefreshCw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Box,
+  ScrollText
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerMetrics } from '@shared/types'
@@ -32,7 +34,7 @@ function timeAgo(ts?: number): string {
 }
 
 export default function ServerDetail(): JSX.Element {
-  const { vault, selectedServerId, openTerminal, openSftp, openServerForm } = useStore()
+  const { vault, selectedServerId, openTerminal, openSftp, openDocker, openLogs, openServerForm } = useStore()
   const server = vault?.servers.find((s) => s.id === selectedServerId)
 
   if (!server) {
@@ -83,6 +85,12 @@ export default function ServerDetail(): JSX.Element {
         </button>
         <button onClick={() => openSftp(server.id)} className="btn-ghost border border-ink-500">
           <FolderTree size={16} /> SFTP
+        </button>
+        <button onClick={() => openDocker(server.id)} className="btn-ghost border border-ink-500">
+          <Box size={16} /> Servisler
+        </button>
+        <button onClick={() => openLogs(server.id)} className="btn-ghost border border-ink-500">
+          <ScrollText size={16} /> Loglar
         </button>
         <button onClick={() => openServerForm(server)} className="btn-ghost border border-ink-500">
           <Pencil size={16} /> Düzenle

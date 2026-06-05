@@ -1,8 +1,10 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, systemPreferences } from 'electron'
 import { IPC } from '@shared/ipc'
 import { vaultStore } from './store'
 import { SSHManager } from './ssh-manager'
 import { setupAutoUpdater, updater } from './updater'
+import { generateKey } from './keygen'
+import type { KeyType } from '@shared/types'
 import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
 
 /** Wrap a handler so it always returns a tidy IpcResult and never throws across IPC. */
@@ -109,6 +111,27 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   handle(IPC.sshMetrics, async (serverId) => {
     const profile = findServer(serverId as string)
     return ssh.metrics(profile, jumpFor(profile))
+  })
+  handle(IPC.sshKeygen, async (type, comment) => generateKey((type as KeyType) || 'ed25519', (comment as string) || 'janus'))
+  handle(IPC.sshInstallKey, async (serverId, publicKey) => {
+    const profile = findServer(serverId as string)
+    await ssh.installPublicKey(profile, publicKey as string, jumpFor(profile))
+    return true
+  })
+
+  // ---- Live log / command streaming ----
+  handle(IPC.streamStart, async (streamId, serverId, command) => {
+    const profile = findServer(serverId as string)
+    await ssh.startStream(streamId as string, profile, command as string, jumpFor(profile))
+    return true
+  })
+  ipcMain.on(IPC.streamStop, (_e, streamId: string) => ssh.stopStream(streamId))
+
+  // ---- System integration (Touch ID) ----
+  handle(IPC.touchIdAvailable, async () => process.platform === 'darwin' && systemPreferences.canPromptTouchID())
+  handle(IPC.touchIdPrompt, async (reason) => {
+    await systemPreferences.promptTouchID((reason as string) || 'Janus kilidini aç')
+    return true
   })
 
   // ---- SFTP ----

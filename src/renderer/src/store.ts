@@ -30,7 +30,7 @@ function savePrefs(patch: Record<string, unknown>): void {
 }
 const prefs = loadPrefs()
 
-export type TabKind = 'terminal' | 'sftp'
+export type TabKind = 'terminal' | 'sftp' | 'docker' | 'logs'
 
 export interface Tab {
   id: string
@@ -52,7 +52,7 @@ interface UIState {
   selectedServerId: string | null
   search: string
   activeTagFilter: string | null
-  sidePanel: 'servers' | 'snippets' | 'tunnels' | 'settings'
+  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'snippets' | 'tunnels' | 'settings'
 
   // modals
   editingServer: ServerProfile | null
@@ -114,6 +114,8 @@ interface Actions {
   // tabs
   openTerminal: (serverId: string) => void
   openSftp: (serverId: string) => void
+  openDocker: (serverId: string) => void
+  openLogs: (serverId: string) => void
   closeTab: (tabId: string) => void
   closeActiveTab: () => void
   setActiveTab: (tabId: string) => void
@@ -359,6 +361,22 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     const server = v?.servers.find((s) => s.id === serverId)
     if (!server) return
     const tab: Tab = { id: uuid(), kind: 'sftp', serverId, title: `SFTP · ${server.name}`, status: 'connecting' }
+    set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
+  },
+
+  openDocker(serverId) {
+    const v = get().vault
+    const server = v?.servers.find((s) => s.id === serverId)
+    if (!server) return
+    const tab: Tab = { id: uuid(), kind: 'docker', serverId, title: `Servisler · ${server.name}`, status: 'connecting' }
+    set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
+  },
+
+  openLogs(serverId) {
+    const v = get().vault
+    const server = v?.servers.find((s) => s.id === serverId)
+    if (!server) return
+    const tab: Tab = { id: uuid(), kind: 'logs', serverId, title: `Loglar · ${server.name}`, status: 'connecting' }
     set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
   },
 

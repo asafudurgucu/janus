@@ -15,7 +15,11 @@ import {
   FolderTree,
   Copy,
   Pencil,
-  Trash2
+  Trash2,
+  LayoutDashboard,
+  Radio,
+  Box,
+  ScrollText
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerProfile, Group } from '@shared/types'
@@ -34,7 +38,9 @@ function readDrag(e: React.DragEvent): DragItem | null {
 }
 
 const railItems = [
+  { key: 'dashboard', icon: LayoutDashboard, label: 'Filo Paneli' },
   { key: 'servers', icon: Server, label: 'Sunucular' },
+  { key: 'broadcast', icon: Radio, label: 'Broadcast' },
   { key: 'snippets', icon: Code2, label: 'Snippet\'ler' },
   { key: 'tunnels', icon: Network, label: 'Tüneller' },
   { key: 'settings', icon: Settings, label: 'Ayarlar' }
@@ -281,7 +287,7 @@ function GroupNode({
 }
 
 function ServerRow({ server, depth }: { server: ServerProfile; depth: number }): JSX.Element {
-  const { selectedServerId, selectServer, openTerminal, openSftp, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
+  const { selectedServerId, selectServer, openTerminal, openSftp, openDocker, openLogs, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
     useStore()
   const [menu, setMenu] = useState(false)
   const selected = selectedServerId === server.id
@@ -339,6 +345,8 @@ function ServerRow({ server, depth }: { server: ServerProfile; depth: number }):
           <div className="absolute right-2 top-7 z-50 w-44 rounded-lg border border-ink-500 bg-ink-700 py-1 text-xs shadow-xl">
             <MenuItem icon={TerminalIcon} label="Terminal aç" onClick={() => { openTerminal(server.id); setMenu(false) }} />
             <MenuItem icon={FolderTree} label="SFTP aç" onClick={() => { openSftp(server.id); setMenu(false) }} />
+            <MenuItem icon={Box} label="Servisler / Docker" onClick={() => { openDocker(server.id); setMenu(false) }} />
+            <MenuItem icon={ScrollText} label="Loglar (canlı)" onClick={() => { openLogs(server.id); setMenu(false) }} />
             <MenuItem icon={Pencil} label="Düzenle" onClick={() => { openServerForm(server); setMenu(false) }} />
             <MenuItem icon={Copy} label="Çoğalt" onClick={() => { duplicateServer(server.id); setMenu(false) }} />
             <div className="my-1 border-t border-ink-500" />

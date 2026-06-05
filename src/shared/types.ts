@@ -175,6 +175,16 @@ export interface UpdateStatus {
   error?: string
 }
 
+// ---- SSH key generation ----
+
+export type KeyType = 'ed25519' | 'rsa'
+
+export interface GeneratedKey {
+  type: KeyType
+  privateKey: string // OpenSSH PEM
+  publicKey: string // single-line authorized_keys format
+}
+
 // ---- IPC channel result envelope ----
 
 export interface IpcResult<T = unknown> {

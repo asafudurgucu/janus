@@ -8,6 +8,8 @@ import type {
   VaultStatus,
   UpdateStatus,
   ServerMetrics,
+  GeneratedKey,
+  KeyType,
   IpcResult
 } from '../shared/types'
 
@@ -41,6 +43,8 @@ const api = {
     exec: (serverId: string, command: string) =>
       invoke<{ stdout: string; stderr: string; code: number }>(IPC.sshExec, serverId, command),
     metrics: (serverId: string) => invoke<ServerMetrics>(IPC.sshMetrics, serverId),
+    keygen: (type: KeyType, comment: string) => invoke<GeneratedKey>(IPC.sshKeygen, type, comment),
+    installKey: (serverId: string, publicKey: string) => invoke<boolean>(IPC.sshInstallKey, serverId, publicKey),
     onData: (sessionId: string, cb: (data: string) => void) => {
       const ch = `data:${sessionId}`
       const listener = (_e: unknown, payload: string): void => cb(payload)
@@ -81,6 +85,31 @@ const api = {
         ipcRenderer.removeListener(ch, listener)
       }
     }
+  },
+  stream: {
+    start: (streamId: string, serverId: string, command: string) =>
+      invoke<boolean>(IPC.streamStart, streamId, serverId, command),
+    stop: (streamId: string) => ipcRenderer.send(IPC.streamStop, streamId),
+    onData: (streamId: string, cb: (data: string) => void) => {
+      const ch = `logdata:${streamId}`
+      const listener = (_e: unknown, payload: string): void => cb(payload)
+      ipcRenderer.on(ch, listener)
+      return () => {
+        ipcRenderer.removeListener(ch, listener)
+      }
+    },
+    onStatus: (streamId: string, cb: (payload: { status: string; message?: string }) => void) => {
+      const ch = `logstatus:${streamId}`
+      const listener = (_e: unknown, payload: { status: string; message?: string }): void => cb(payload)
+      ipcRenderer.on(ch, listener)
+      return () => {
+        ipcRenderer.removeListener(ch, listener)
+      }
+    }
+  },
+  system: {
+    touchIdAvailable: () => invoke<boolean>(IPC.touchIdAvailable),
+    touchIdPrompt: (reason: string) => invoke<boolean>(IPC.touchIdPrompt, reason)
   },
   updates: {
     check: () => invoke<boolean>(IPC.updateCheck),

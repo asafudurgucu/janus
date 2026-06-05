@@ -188,6 +188,54 @@ export class SSHManager {
     })
   }
 
+  /** Append a public key to the server's ~/.ssh/authorized_keys. */
+  async installPublicKey(profile: ServerProfile, publicKey: string, jump?: ServerProfile | null): Promise<void> {
+    const safe = publicKey.replace(/'/g, '').trim()
+    const cmd =
+      `mkdir -p ~/.ssh && chmod 700 ~/.ssh && ` +
+      `touch ~/.ssh/authorized_keys && grep -qxF '${safe}' ~/.ssh/authorized_keys || echo '${safe}' >> ~/.ssh/authorized_keys && ` +
+      `chmod 600 ~/.ssh/authorized_keys && echo OK`
+    const { code, stdout, stderr } = await this.exec(profile, cmd, jump)
+    if (code !== 0 || !stdout.includes('OK')) throw new Error(stderr || 'Anahtar kurulamadı.')
+  }
+
+  // ---------------- Live log / command streaming ----------------
+
+  private streams = new Map<string, Client>()
+
+  async startStream(
+    streamId: string,
+    profile: ServerProfile,
+    command: string,
+    jump?: ServerProfile | null
+  ): Promise<void> {
+    const client = await this.connectClient(profile, jump)
+    this.streams.set(streamId, client)
+    client.on('close', () => {
+      this.streams.delete(streamId)
+      this.emit(`logstatus:${streamId}`, { status: 'closed' })
+    })
+    client.exec(command, (err, stream) => {
+      if (err) {
+        this.emit(`logstatus:${streamId}`, { status: 'error', message: err.message })
+        client.end()
+        return
+      }
+      this.emit(`logstatus:${streamId}`, { status: 'open' })
+      stream.on('data', (d: Buffer) => this.emit(`logdata:${streamId}`, d.toString('utf8')))
+      stream.stderr.on('data', (d: Buffer) => this.emit(`logdata:${streamId}`, d.toString('utf8')))
+      stream.on('close', () => client.end())
+    })
+  }
+
+  stopStream(streamId: string): void {
+    const c = this.streams.get(streamId)
+    if (c) {
+      c.end()
+      this.streams.delete(streamId)
+    }
+  }
+
   // ---------------- Health metrics ----------------
 
   /** Gather live system metrics (Linux). Best-effort; never throws. */
@@ -465,6 +513,7 @@ export class SSHManager {
   shutdown(): void {
     for (const id of [...this.shells.keys()]) this.disconnect(id)
     for (const id of [...this.tunnels.keys()]) this.stopTunnel(id)
+    for (const id of [...this.streams.keys()]) this.stopStream(id)
     for (const [, c] of this.sftpClients) c.end()
     this.sftpClients.clear()
   }

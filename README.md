@@ -15,6 +15,14 @@
 - ⌘ **Komut paleti (Cmd/Ctrl+K)** — anında sunucu ara, bağlan, panel değiştir.
 - 🔎 **Terminal içi arama (Cmd/Ctrl+F)** — çıktıda metin ara.
 - 🔄 **Otomatik güncelleme** — GitHub Releases üzerinden, uygulama içi bildirim.
+- 📊 **Filo Paneli** — tüm sunucuların canlı CPU/RAM/disk/uptime durumu tek ekranda.
+- 📡 **Broadcast** — bir komutu birden çok sunucuda aynı anda çalıştır, çıktıları yan yana.
+- 🐳 **Docker & systemd & süreç yönetimi** — konteyner/servis başlat-durdur-restart, process kill.
+- 📜 **Canlı log akışı** — `tail -f` / `journalctl -f` ile uzak logları gerçek zamanlı izle, filtrele.
+- 🩺 **Sunucu sağlık metrikleri** — RAM/disk/load/uptime + sağlık rozeti.
+- 🔑 **SSH anahtar yöneticisi** — uygulama içinde anahtar üret, sunucuya tek tıkla kur.
+- 🎨 **5 tema** (Midnight/Carbon/Ocean/Plum/Forest), 🔁 **otomatik yeniden bağlanma**,
+  👆 **Touch ID ile kilit açma** (macOS), 🔒 **boşta otomatik kilit** & **cihazda otomatik giriş**.
 
 ## ⌨️ Klavye kısayolları
 
@@ -89,8 +97,28 @@ GitHub Actions tarafından otomatik sağlanır.)
 > **Önemli — macOS imzalama:** macOS'te otomatik güncellemenin sorunsuz çalışması için uygulamanın
 > **kod imzalı + notarize** edilmiş olması gerekir (Squirrel.Mac şartı). İmzasız mac sürümleri elle
 > indirilip kurulabilir ama otomatik güncelleme mac'te imza ister. Windows ve Linux'ta imzasız
-> otomatik güncelleme çalışır. İmzalamak için Apple Developer sertifikanı CI secret'ı olarak ekleyip
-> `electron-builder.yml`'de `mac.identity` ayarını yapman yeterli.
+> otomatik güncelleme çalışır.
+
+## 🔏 Kod imzalama & notarization (opsiyonel)
+
+İmzasız paketler çalışır ama ilk açılışta Gatekeeper/SmartScreen uyarısı verir ve macOS otomatik
+güncelleme uygulanmaz. Tam imzalı + notarize için (altyapı hazır, sadece sertifika + secret gerekir):
+
+1. **Apple Developer** hesabı aç ($99/yıl), bir **Developer ID Application** sertifikası oluştur, `.p12` olarak dışa aktar.
+2. Şu GitHub **secrets**'ları ekle (repo → Settings → Secrets → Actions):
+   - `CSC_LINK` = `.p12` dosyasının base64'ü (`base64 -i cert.p12 | pbcopy`)
+   - `CSC_KEY_PASSWORD` = `.p12` parolası
+   - `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` ([appleid.apple.com](https://appleid.apple.com) → uygulama parolası), `APPLE_TEAM_ID`
+3. `electron-builder.yml`'de `mac.identity: null` satırını sil ve `notarize.teamId`'yi aç.
+4. Yeni sürüm çıkar — CI otomatik imzalar + notarize eder. Uyarılar kalkar, mac auto-update çalışır.
+
+(Windows için: `WIN_CSC_LINK` + `WIN_CSC_KEY_PASSWORD` secret'ları.)
+
+## 🌐 İndirme web sitesi
+
+`docs/` altında, en güncel sürümü GitHub API'den otomatik çeken bir landing page var. GitHub Pages
+(Settings → Pages → Source: `main` / `/docs`) ile yayınlanır:
+**https://asafudurgucu.github.io/janus/**
 
 ## 🏗️ Mimari
 

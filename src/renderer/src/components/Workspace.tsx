@@ -1,12 +1,18 @@
-import { Terminal as TerminalIcon, FolderTree, X, Plug } from 'lucide-react'
+import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, X } from 'lucide-react'
 import { useStore } from '../store'
 import TerminalView from './Terminal'
 import SftpPanel from './SftpPanel'
+import DockerPanel from './DockerPanel'
+import LogsPanel from './LogsPanel'
 import SnippetsPanel from './SnippetsPanel'
 import TunnelsPanel from './TunnelsPanel'
 import SettingsPanel from './SettingsPanel'
+import FleetDashboard from './FleetDashboard'
+import BroadcastPanel from './BroadcastPanel'
 import ServerDetail from './ServerDetail'
 import type { Tab } from '../store'
+
+const TAB_ICON = { terminal: TerminalIcon, sftp: FolderTree, docker: Box, logs: ScrollText } as const
 
 function statusColor(status: Tab['status']): string {
   switch (status) {
@@ -25,6 +31,8 @@ export default function Workspace(): JSX.Element {
   const { tabs, activeTabId, setActiveTab, closeTab, sidePanel } = useStore()
 
   // Non-server panels take over the whole workspace.
+  if (sidePanel === 'dashboard') return <FleetDashboard />
+  if (sidePanel === 'broadcast') return <BroadcastPanel />
   if (sidePanel === 'snippets') return <SnippetsPanel />
   if (sidePanel === 'tunnels') return <TunnelsPanel />
   if (sidePanel === 'settings') return <SettingsPanel />
@@ -36,7 +44,7 @@ export default function Workspace(): JSX.Element {
         <div className="flex h-10 shrink-0 items-stretch overflow-x-auto border-b border-ink-600 bg-ink-800">
           {tabs.map((tab) => {
             const active = tab.id === activeTabId
-            const Icon = tab.kind === 'terminal' ? TerminalIcon : FolderTree
+            const Icon = TAB_ICON[tab.kind]
             return (
               <div
                 key={tab.id}
@@ -70,7 +78,15 @@ export default function Workspace(): JSX.Element {
         ) : (
           tabs.map((tab) => (
             <div key={tab.id} className="absolute inset-0" style={{ display: tab.id === activeTabId ? 'block' : 'none' }}>
-              {tab.kind === 'terminal' ? <TerminalView tab={tab} /> : <SftpPanel tab={tab} />}
+              {tab.kind === 'terminal' ? (
+                <TerminalView tab={tab} />
+              ) : tab.kind === 'sftp' ? (
+                <SftpPanel tab={tab} />
+              ) : tab.kind === 'docker' ? (
+                <DockerPanel tab={tab} />
+              ) : (
+                <LogsPanel tab={tab} />
+              )}
             </div>
           ))
         )}

@@ -26,7 +26,15 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null): void {
   autoUpdater.on('update-not-available', (info) => send({ phase: 'not-available', version: info.version }))
   autoUpdater.on('download-progress', (p) => send({ phase: 'downloading', percent: Math.round(p.percent) }))
   autoUpdater.on('update-downloaded', (info) => send({ phase: 'downloaded', version: info.version }))
-  autoUpdater.on('error', (err) => send({ phase: 'error', error: err.message }))
+  autoUpdater.on('error', (err) => {
+    const msg = err?.message || String(err)
+    // A dev/unconfigured build has no app-update.yml — don't alarm the user.
+    if (msg.includes('app-update.yml') || msg.includes('ENOENT') || msg.includes('No published versions')) {
+      send({ phase: 'not-available' })
+      return
+    }
+    send({ phase: 'error', error: msg })
+  })
 
   // Quietly check on startup (only meaningful in a packaged, published build).
   if (app.isPackaged) {
