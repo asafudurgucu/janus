@@ -11,6 +11,9 @@ export const IPC = {
   vaultWrite: 'vault:write',
   vaultExport: 'vault:export',
   vaultImport: 'vault:import',
+  vaultRemember: 'vault:remember',
+  vaultForget: 'vault:forget',
+  vaultAutoUnlock: 'vault:auto-unlock',
 
   // SSH session lifecycle
   sshConnect: 'ssh:connect',
@@ -18,6 +21,7 @@ export const IPC = {
   sshResize: 'ssh:resize',
   sshDisconnect: 'ssh:disconnect',
   sshExec: 'ssh:exec', // run a one-off command, return output
+  sshMetrics: 'ssh:metrics', // gather live system metrics
 
   // SSH session events (main -> renderer, prefixed with session id)
   sshOnData: 'ssh:on-data',

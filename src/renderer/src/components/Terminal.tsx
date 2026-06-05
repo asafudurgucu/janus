@@ -86,25 +86,43 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
     dim('│  SSH anahtarı/parola doğrulanıyor…')
     const t0 = Date.now()
 
+    const autoReconnect = vault?.settings.autoReconnect ?? true
+    let disposed = false
+    let attempts = 0
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+
+    const doConnect = (): void => {
+      window.janus.ssh
+        .connect(sessionId, tab.serverId, term.cols, term.rows)
+        .catch((e) => term.writeln(`╰─ \x1b[31m✖ ${(e as Error).message}\x1b[0m`))
+    }
+
     const keyDisposable = term.onData((d) => window.janus.ssh.data(sessionId, d))
     const offData = window.janus.ssh.onData(sessionId, (data) => term.write(data))
     const offStatus = window.janus.ssh.onStatus(sessionId, (p) => {
       setTabStatus(sessionId, p.status as Tab['status'])
       if (p.status === 'connected') {
+        attempts = 0
         dim(`╰─ \x1b[32m● bağlandı\x1b[38;5;245m (${Date.now() - t0} ms)\x1b[0m\r\n`)
       }
       if (p.status === 'error' && p.message) {
         term.writeln(`╰─ \x1b[31m✖ Bağlantı hatası: ${p.message}\x1b[0m`)
       }
-      if (p.status === 'disconnected') {
-        term.writeln('\r\n\x1b[33m⚠ Bağlantı kapandı.\x1b[0m')
+      if (p.status === 'disconnected' && !disposed) {
+        if (autoReconnect && attempts < 5) {
+          attempts++
+          const delay = Math.min(2000 * attempts, 10000)
+          term.writeln(`\r\n\x1b[33m⚠ Bağlantı koptu. ${delay / 1000}sn içinde yeniden bağlanılıyor… (deneme ${attempts}/5)\x1b[0m`)
+          reconnectTimer = setTimeout(doConnect, delay)
+        } else {
+          term.writeln(
+            `\r\n\x1b[33m⚠ Bağlantı kapandı.\x1b[0m${autoReconnect ? ' \x1b[38;5;245m(yeniden deneme limitine ulaşıldı)\x1b[0m' : ''}`
+          )
+        }
       }
     })
 
-    const { cols, rows } = term
-    window.janus.ssh
-      .connect(sessionId, tab.serverId, cols, rows)
-      .catch((e) => term.writeln(`╰─ \x1b[31m✖ ${(e as Error).message}\x1b[0m`))
+    doConnect()
 
     const resize = (): void => {
       try {
@@ -118,6 +136,8 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
     ro.observe(hostRef.current)
 
     return () => {
+      disposed = true
+      clearTimeout(reconnectTimer)
       ro.disconnect()
       keyDisposable.dispose()
       offData()

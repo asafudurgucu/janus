@@ -4,19 +4,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Refined, low-chroma dark palette (Linear/Vercel-grade)
+        // Theme-driven palette via CSS variables (see index.css [data-theme]).
         ink: {
-          900: '#0a0b0d', // app canvas
-          800: '#0f1113', // panels / title bar
-          700: '#141619', // cards / hover
-          600: '#1d2024', // hairline borders
-          500: '#272b31', // input borders / dividers
-          400: '#3a4048' // muted lines
+          900: 'rgb(var(--ink-900) / <alpha-value>)', // app canvas
+          800: 'rgb(var(--ink-800) / <alpha-value>)', // panels / title bar
+          700: 'rgb(var(--ink-700) / <alpha-value>)', // cards / hover
+          600: 'rgb(var(--ink-600) / <alpha-value>)', // hairline borders
+          500: 'rgb(var(--ink-500) / <alpha-value>)', // input borders / dividers
+          400: 'rgb(var(--ink-400) / <alpha-value>)' // muted lines
         },
         accent: {
-          DEFAULT: '#6366f1', // indigo
-          soft: '#818cf8',
-          dim: '#4f46e5'
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          soft: 'rgb(var(--accent-soft) / <alpha-value>)',
+          dim: 'rgb(var(--accent-dim) / <alpha-value>)'
         },
         good: '#34d399',
         warn: '#fbbf24',

@@ -10,12 +10,36 @@ import CommandPalette from './components/CommandPalette'
 import UpdateBanner from './components/UpdateBanner'
 
 export default function App(): JSX.Element {
-  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab } =
+  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock } =
     useStore()
 
   useEffect(() => {
     init()
   }, [init])
+
+  // Apply the selected theme to the document root.
+  const theme = vault?.settings.theme ?? 'midnight'
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
+
+  // Auto-lock after a period of inactivity (0 = never).
+  const lockAfterMinutes = vault?.settings.lockAfterMinutes ?? 0
+  useEffect(() => {
+    if (locked || !lockAfterMinutes) return
+    let timer: ReturnType<typeof setTimeout>
+    const reset = (): void => {
+      clearTimeout(timer)
+      timer = setTimeout(() => lock(), lockAfterMinutes * 60_000)
+    }
+    const events = ['mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart']
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }))
+    reset()
+    return () => {
+      clearTimeout(timer)
+      events.forEach((e) => window.removeEventListener(e, reset))
+    }
+  }, [locked, lockAfterMinutes, lock])
 
   // Global keyboard shortcuts.
   useEffect(() => {

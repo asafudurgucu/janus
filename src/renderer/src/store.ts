@@ -70,8 +70,8 @@ interface UIState {
 
 interface Actions {
   init: () => Promise<void>
-  createVault: (password: string) => Promise<void>
-  unlock: (password: string) => Promise<void>
+  createVault: (password: string, remember?: boolean) => Promise<void>
+  unlock: (password: string, remember?: boolean) => Promise<void>
   lock: () => Promise<void>
   persist: () => Promise<void>
 
@@ -147,17 +147,40 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   async init() {
     set({ loading: true })
     const status = await window.janus.vault.status()
+    // Already unlocked in the main process (e.g. a dev reload) — load the vault
+    // so the sidebar isn't empty. (Fixes "no servers until lock/unlock".)
+    if (status.unlocked) {
+      try {
+        const vault = await window.janus.vault.read()
+        set({ vault, hasVault: true, locked: false, loading: false })
+        return
+      } catch {
+        /* fall through */
+      }
+    }
+    // Auto-unlock when the master password is remembered on this device.
+    if (status.exists && status.hasRemembered) {
+      try {
+        const vault = await window.janus.vault.autoUnlock()
+        set({ vault, hasVault: true, locked: false, loading: false })
+        return
+      } catch {
+        /* stored credential invalid → show the lock screen */
+      }
+    }
     set({ hasVault: status.exists, locked: !status.unlocked, loading: false })
   },
 
-  async createVault(password) {
+  async createVault(password, remember = false) {
     const vault = await window.janus.vault.create(password)
+    if (remember) await window.janus.vault.remember(password).catch(() => undefined)
     set({ vault, locked: false, hasVault: true, error: null })
   },
 
-  async unlock(password) {
+  async unlock(password, remember = false) {
     try {
       const vault = await window.janus.vault.unlock(password)
+      if (remember) await window.janus.vault.remember(password).catch(() => undefined)
       set({ vault, locked: false, error: null })
     } catch (e) {
       set({ error: (e as Error).message })

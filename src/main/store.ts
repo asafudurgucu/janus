@@ -1,5 +1,5 @@
-import { app } from 'electron'
-import { readFile, writeFile, mkdir, access, rename } from 'fs/promises'
+import { app, safeStorage } from 'electron'
+import { readFile, writeFile, mkdir, access, rename, unlink } from 'fs/promises'
 import { constants } from 'fs'
 import { join, dirname } from 'path'
 import { encryptVault, decryptVault, EncryptedFile } from './crypto'
@@ -17,6 +17,56 @@ class VaultStore {
   /** Default location of the vault file. */
   get filePath(): string {
     return join(app.getPath('userData'), 'janus.vault.json')
+  }
+
+  /** Location of the per-device remembered master password (OS-encrypted). */
+  private get credPath(): string {
+    return join(app.getPath('userData'), 'janus.device.cred')
+  }
+
+  // ---- "Remember on this device" (OS keychain via safeStorage) ----
+
+  async hasRemembered(): Promise<boolean> {
+    try {
+      await access(this.credPath, constants.F_OK)
+      return safeStorage.isEncryptionAvailable()
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Persist a master password for this device, encrypted by the OS keychain.
+   * If no password is given, remembers the currently-unlocked one.
+   */
+  async rememberPassword(password?: string): Promise<void> {
+    const pw = password || this.password
+    if (!pw) throw new Error('Hatırlanacak parola yok (vault kilitli).')
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Bu cihazda güvenli depolama kullanılamıyor.')
+    const enc = safeStorage.encryptString(pw)
+    await writeFile(this.credPath, enc.toString('base64'), 'utf8')
+  }
+
+  /** Forget the remembered password for this device. */
+  async forget(): Promise<void> {
+    try {
+      await unlink(this.credPath)
+    } catch {
+      /* already gone */
+    }
+  }
+
+  /** Unlock using the remembered device password. Throws if none / invalid. */
+  async autoUnlock(): Promise<Vault> {
+    const b64 = await readFile(this.credPath, 'utf8')
+    const password = safeStorage.decryptString(Buffer.from(b64, 'base64'))
+    try {
+      return await this.unlock(password)
+    } catch (e) {
+      // Stored password no longer valid (e.g. changed) — clear it.
+      await this.forget()
+      throw e
+    }
   }
 
   get isUnlocked(): boolean {
@@ -81,6 +131,8 @@ class VaultStore {
     if (!newPassword || newPassword.length < 4) throw new Error('Yeni parola en az 4 karakter olmalı.')
     this.password = newPassword
     await this.flush()
+    // Keep the device credential in sync if it was being remembered.
+    if (await this.hasRemembered()) await this.rememberPassword(newPassword)
   }
 
   /** Export the encrypted file to an arbitrary path (already-encrypted, portable). */

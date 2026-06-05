@@ -68,8 +68,10 @@ export interface TunnelRule {
   autoStart?: boolean
 }
 
+export type ThemeId = 'midnight' | 'carbon' | 'ocean' | 'plum' | 'forest'
+
 export interface AppSettings {
-  theme: 'dark' | 'midnight' | 'light'
+  theme: ThemeId
   fontFamily: string
   fontSize: number
   cursorStyle: 'block' | 'underline' | 'bar'
@@ -77,6 +79,7 @@ export interface AppSettings {
   scrollback: number
   lockAfterMinutes: number // auto-lock idle vault, 0 = never
   copyOnSelect: boolean
+  autoReconnect: boolean // reconnect dropped SSH sessions automatically
 }
 
 /** The full decrypted vault — this is what gets serialized into the single encrypted file. */
@@ -90,14 +93,15 @@ export interface Vault {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'dark',
+  theme: 'midnight',
   fontFamily: 'JetBrains Mono, SFMono-Regular, Menlo, monospace',
   fontSize: 13,
   cursorStyle: 'bar',
   cursorBlink: true,
   scrollback: 10000,
   lockAfterMinutes: 0,
-  copyOnSelect: true
+  copyOnSelect: true,
+  autoReconnect: true
 }
 
 export function emptyVault(): Vault {
@@ -119,6 +123,24 @@ export interface VaultStatus {
   exists: boolean // a vault file is present on disk
   unlocked: boolean // currently decrypted in memory
   path: string
+  hasRemembered: boolean // a master password is stored for this device (auto-unlock)
+}
+
+/** Live system metrics for a server (best-effort, Linux). */
+export interface ServerMetrics {
+  reachable: boolean
+  os?: string
+  kernel?: string
+  uptimeSec?: number
+  load?: [number, number, number]
+  cpuCount?: number
+  memTotal?: number
+  memUsed?: number
+  memAvailable?: number
+  diskTotal?: number
+  diskUsed?: number
+  diskAvailable?: number
+  error?: string
 }
 
 // ---- SFTP ----

@@ -1,5 +1,24 @@
-import { Terminal as TerminalIcon, FolderTree, Pencil, Server, Tag, Clock, Globe, User, KeyRound } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import {
+  Terminal as TerminalIcon,
+  FolderTree,
+  Pencil,
+  Server,
+  Tag,
+  Clock,
+  Globe,
+  User,
+  KeyRound,
+  Activity,
+  Cpu,
+  MemoryStick,
+  HardDrive,
+  RefreshCw,
+  Loader2,
+  AlertCircle
+} from 'lucide-react'
 import { useStore } from '../store'
+import type { ServerMetrics } from '@shared/types'
 
 function timeAgo(ts?: number): string {
   if (!ts) return 'hiç'
@@ -77,6 +96,8 @@ export default function ServerDetail(): JSX.Element {
         <InfoCard icon={Clock} label="Son bağlantı" value={timeAgo(server.lastConnectedAt)} />
       </div>
 
+      <MetricsCard serverId={server.id} />
+
       {server.notes && (
         <div className="mt-6">
           <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Notlar</h3>
@@ -96,6 +117,167 @@ function InfoCard({ icon: Icon, label, value }: { icon: typeof Globe; label: str
       <div className="min-w-0">
         <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
         <div className="truncate text-sm text-slate-200">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+// ---- Live health metrics (DevOps) ----
+
+function fmtBytes(b?: number): string {
+  if (!b || b < 0) return '—'
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  let v = b
+  while (v >= 1024 && i < u.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${u[i]}`
+}
+
+function fmtUptime(sec?: number): string {
+  if (!sec) return '—'
+  const d = Math.floor(sec / 86400)
+  const h = Math.floor((sec % 86400) / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  if (d > 0) return `${d}g ${h}s`
+  if (h > 0) return `${h}s ${m}dk`
+  return `${m}dk`
+}
+
+/** 0..1 ratio → color + label tier. */
+function tier(ratio: number): { color: string; bar: string } {
+  if (ratio >= 0.9) return { color: 'text-bad', bar: 'bg-bad' }
+  if (ratio >= 0.75) return { color: 'text-warn', bar: 'bg-warn' }
+  return { color: 'text-good', bar: 'bg-good' }
+}
+
+function MetricsCard({ serverId }: { serverId: string }): JSX.Element {
+  const [data, setData] = useState<ServerMetrics | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      setData(await window.janus.ssh.metrics(serverId))
+    } catch (e) {
+      setData({ reachable: false, error: (e as Error).message })
+    } finally {
+      setLoading(false)
+    }
+  }, [serverId])
+
+  useEffect(() => {
+    setData(null)
+    load()
+  }, [load])
+
+  const memRatio = data?.memTotal ? (data.memUsed ?? 0) / data.memTotal : 0
+  const diskRatio = data?.diskTotal ? (data.diskUsed ?? 0) / data.diskTotal : 0
+  const loadRatio = data?.cpuCount && data.load ? data.load[0] / data.cpuCount : 0
+  const worst = Math.max(memRatio, diskRatio, loadRatio)
+  const health = data?.reachable ? tier(worst) : { color: 'text-slate-500', bar: 'bg-slate-600' }
+  const healthLabel = !data?.reachable
+    ? 'erişilemiyor'
+    : worst >= 0.9
+      ? 'kritik'
+      : worst >= 0.75
+        ? 'yüksek yük'
+        : 'sağlıklı'
+
+  return (
+    <div className="mt-6 rounded-xl border border-ink-600 bg-ink-800 p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+          <Activity size={16} className="text-accent" /> Sistem Durumu
+          <span className={`flex items-center gap-1 text-xs font-medium ${health.color}`}>
+            <span className={`h-2 w-2 rounded-full ${health.bar}`} /> {healthLabel}
+          </span>
+        </h3>
+        <button onClick={load} disabled={loading} className="btn-ghost border border-ink-500 px-2 py-1 text-xs">
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Yenile
+        </button>
+      </div>
+
+      {loading && !data && (
+        <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
+          <Loader2 size={16} className="animate-spin" /> Metrikler alınıyor…
+        </div>
+      )}
+
+      {data && !data.reachable && (
+        <div className="flex items-center gap-2 rounded-md bg-bad/10 px-3 py-2 text-xs text-bad">
+          <AlertCircle size={14} /> {data.error || 'Sunucuya ulaşılamadı.'}
+        </div>
+      )}
+
+      {data && data.reachable && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Server size={14} className="text-slate-500" /> {data.os || 'Linux'}
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <Clock size={14} className="text-slate-500" /> uptime {fmtUptime(data.uptimeSec)}
+            </div>
+          </div>
+
+          <Gauge
+            icon={MemoryStick}
+            label="RAM"
+            used={fmtBytes(data.memUsed)}
+            total={fmtBytes(data.memTotal)}
+            ratio={memRatio}
+          />
+          <Gauge
+            icon={HardDrive}
+            label="Disk ( / )"
+            used={fmtBytes(data.diskUsed)}
+            total={fmtBytes(data.diskTotal)}
+            ratio={diskRatio}
+          />
+
+          <div className="flex items-center gap-2">
+            <Cpu size={15} className="text-slate-500" />
+            <span className="text-xs text-slate-400">Yük (1·5·15dk)</span>
+            <span className={`font-mono text-sm ${tier(loadRatio).color}`}>
+              {data.load ? data.load.map((l) => l.toFixed(2)).join('  ') : '—'}
+            </span>
+            <span className="text-xs text-slate-600">/ {data.cpuCount ?? '?'} çekirdek</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Gauge({
+  icon: Icon,
+  label,
+  used,
+  total,
+  ratio
+}: {
+  icon: typeof MemoryStick
+  label: string
+  used: string
+  total: string
+  ratio: number
+}): JSX.Element {
+  const t = tier(ratio)
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 text-slate-400">
+          <Icon size={14} className="text-slate-500" /> {label}
+        </span>
+        <span className="font-mono text-slate-400">
+          {used} / {total} <span className={t.color}>({Math.round(ratio * 100)}%)</span>
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-ink-600">
+        <div className={`h-full ${t.bar} transition-all`} style={{ width: `${Math.min(100, ratio * 100)}%` }} />
       </div>
     </div>
   )

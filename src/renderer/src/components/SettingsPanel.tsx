@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Settings, Type, ShieldCheck, Download, Upload, KeyRound, Check, AlertCircle, RefreshCw, Linkedin } from 'lucide-react'
+import {
+  Settings,
+  Type,
+  ShieldCheck,
+  Download,
+  Upload,
+  KeyRound,
+  Check,
+  AlertCircle,
+  RefreshCw,
+  Linkedin,
+  Palette,
+  Clock,
+  Cloud,
+  Plug
+} from 'lucide-react'
 import { useStore } from '../store'
+import type { ThemeId } from '@shared/types'
 
 export default function SettingsPanel(): JSX.Element {
   const { vault, updateSettings } = useStore()
@@ -17,6 +33,12 @@ export default function SettingsPanel(): JSX.Element {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <div className="mx-auto max-w-2xl space-y-6">
+          {/* Theme */}
+          <ThemeSection current={s.theme} onPick={(t) => updateSettings({ theme: t })} />
+
+          {/* Session & security */}
+          <SessionSection />
+
           {/* Terminal appearance */}
           <Section icon={Type} title="Terminal Görünümü">
             <Row label="Yazı tipi">
@@ -60,10 +82,21 @@ export default function SettingsPanel(): JSX.Element {
               />
               İmleç yanıp sönsün
             </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={s.autoReconnect}
+                onChange={(e) => updateSettings({ autoReconnect: e.target.checked })}
+                className="h-4 w-4 accent-accent"
+              />
+              Bağlantı koparsa otomatik yeniden bağlan
+            </label>
           </Section>
 
           {/* Vault */}
           <VaultSection />
+
+          <CloudSoon />
 
           <AboutSection />
         </div>
@@ -231,6 +264,113 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
     <div className="grid grid-cols-[200px_1fr] items-center gap-3">
       <label className="text-sm text-slate-400">{label}</label>
       {children}
+    </div>
+  )
+}
+
+const THEMES: { id: ThemeId; name: string; bg: string; accent: string }[] = [
+  { id: 'midnight', name: 'Midnight', bg: '#0a0b0d', accent: '#6366f1' },
+  { id: 'carbon', name: 'Carbon', bg: '#0d0d0f', accent: '#3b82f6' },
+  { id: 'ocean', name: 'Ocean', bg: '#080c14', accent: '#06b6d4' },
+  { id: 'plum', name: 'Plum', bg: '#0e0a12', accent: '#a855f7' },
+  { id: 'forest', name: 'Forest', bg: '#090e0b', accent: '#10b981' }
+]
+
+function ThemeSection({ current, onPick }: { current: ThemeId; onPick: (t: ThemeId) => void }): JSX.Element {
+  return (
+    <Section icon={Palette} title="Tema">
+      <div className="grid grid-cols-5 gap-3">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onPick(t.id)}
+            className={`rounded-lg border p-2 transition-colors ${
+              current === t.id ? 'border-accent ring-1 ring-accent' : 'border-ink-500 hover:border-ink-400'
+            }`}
+          >
+            <div className="mb-2 flex h-12 items-end rounded-md p-1.5" style={{ background: t.bg }}>
+              <span className="h-2 w-full rounded-full" style={{ background: t.accent }} />
+            </div>
+            <div className={`text-center text-xs ${current === t.id ? 'text-white' : 'text-slate-400'}`}>{t.name}</div>
+          </button>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+function SessionSection(): JSX.Element {
+  const { vault, updateSettings } = useStore()
+  const s = vault!.settings
+  const [remembered, setRemembered] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    window.janus.vault.status().then((st) => setRemembered(st.hasRemembered)).catch(() => undefined)
+  }, [])
+
+  async function toggleRemember(on: boolean): Promise<void> {
+    setBusy(true)
+    try {
+      if (on) await window.janus.vault.remember()
+      else await window.janus.vault.forget()
+      setRemembered(on)
+    } catch {
+      /* ignore */
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Section icon={Clock} title="Oturum & Güvenlik">
+      <Row label="Boşta otomatik kilit">
+        <select
+          value={s.lockAfterMinutes}
+          onChange={(e) => updateSettings({ lockAfterMinutes: Number(e.target.value) })}
+          className="field"
+        >
+          <option value={0}>Kapalı</option>
+          <option value={5}>5 dakika sonra</option>
+          <option value={15}>15 dakika sonra</option>
+          <option value={30}>30 dakika sonra</option>
+          <option value={60}>1 saat sonra</option>
+        </select>
+      </Row>
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+        <input
+          type="checkbox"
+          disabled={busy}
+          checked={remembered}
+          onChange={(e) => toggleRemember(e.target.checked)}
+          className="h-4 w-4 accent-accent"
+        />
+        Bu cihazda otomatik giriş yap (parola OS kasasında şifreli saklanır)
+      </label>
+      <p className="text-xs text-slate-500">
+        Kapatırsan her açılışta master parola sorulur. Açıkken bu cihazda parola sorulmadan girilir.
+      </p>
+    </Section>
+  )
+}
+
+function CloudSoon(): JSX.Element {
+  return (
+    <div className="rounded-xl border border-dashed border-accent/40 bg-accent/5 p-5">
+      <div className="mb-1.5 flex items-center gap-2">
+        <Cloud size={17} className="text-accent" />
+        <span className="font-semibold text-slate-200">Bulut Senkronizasyonu & Hesaplar</span>
+        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+          Yakında
+        </span>
+      </div>
+      <p className="text-sm leading-relaxed text-slate-400">
+        Çok yakında: <span className="text-slate-300">kullanıcı hesabıyla giriş</span>, cihazlar arası şifreli
+        senkronizasyon ve ekip içi sunucu paylaşımı. Sunucuların her cihazında, güvenle yanında.
+      </p>
+      <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+        <Plug size={12} /> The Asaf Effect ekosistemiyle geliyor.
+      </p>
     </div>
   )
 }

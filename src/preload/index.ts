@@ -1,6 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc'
-import type { Vault, ServerProfile, TunnelRule, SftpEntry, VaultStatus, UpdateStatus, IpcResult } from '../shared/types'
+import type {
+  Vault,
+  ServerProfile,
+  TunnelRule,
+  SftpEntry,
+  VaultStatus,
+  UpdateStatus,
+  ServerMetrics,
+  IpcResult
+} from '../shared/types'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const res = (await ipcRenderer.invoke(channel, ...args)) as IpcResult<T>
@@ -18,7 +27,10 @@ const api = {
     read: () => invoke<Vault>(IPC.vaultRead),
     write: (vault: Vault) => invoke<boolean>(IPC.vaultWrite, vault),
     export: () => invoke<string | false>(IPC.vaultExport),
-    import: (password: string) => invoke<Vault | false>(IPC.vaultImport, password)
+    import: (password: string) => invoke<Vault | false>(IPC.vaultImport, password),
+    remember: (password?: string) => invoke<boolean>(IPC.vaultRemember, password),
+    forget: () => invoke<boolean>(IPC.vaultForget),
+    autoUnlock: () => invoke<Vault>(IPC.vaultAutoUnlock)
   },
   ssh: {
     connect: (sessionId: string, serverId: string, cols: number, rows: number) =>
@@ -28,6 +40,7 @@ const api = {
     disconnect: (sessionId: string) => ipcRenderer.send(IPC.sshDisconnect, sessionId),
     exec: (serverId: string, command: string) =>
       invoke<{ stdout: string; stderr: string; code: number }>(IPC.sshExec, serverId, command),
+    metrics: (serverId: string) => invoke<ServerMetrics>(IPC.sshMetrics, serverId),
     onData: (sessionId: string, cb: (data: string) => void) => {
       const ch = `data:${sessionId}`
       const listener = (_e: unknown, payload: string): void => cb(payload)

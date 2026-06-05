@@ -1,7 +1,7 @@
 import { Client, ConnectConfig } from 'ssh2'
 import type { ClientChannel } from 'ssh2'
 import { createServer, Server, Socket, connect as netConnect } from 'net'
-import type { ServerProfile, TunnelRule, SftpEntry, SessionStatus } from '@shared/types'
+import type { ServerProfile, TunnelRule, SftpEntry, SessionStatus, ServerMetrics } from '@shared/types'
 
 type Emit = (channel: string, payload: unknown) => void
 
@@ -186,6 +186,52 @@ export class SSHManager {
         stream.stderr.on('data', (d: Buffer) => (stderr += d.toString('utf8')))
       })
     })
+  }
+
+  // ---------------- Health metrics ----------------
+
+  /** Gather live system metrics (Linux). Best-effort; never throws. */
+  async metrics(profile: ServerProfile, jump?: ServerProfile | null): Promise<ServerMetrics> {
+    const cmd = [
+      'echo "OS:$(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -s)"',
+      'echo "KERNEL:$(uname -r)"',
+      'echo "UPTIME:$(cut -d. -f1 /proc/uptime 2>/dev/null)"',
+      'echo "LOAD:$(cut -d\' \' -f1-3 /proc/loadavg 2>/dev/null)"',
+      'echo "CPU:$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo)"',
+      'echo "MEM:$(free -b 2>/dev/null | awk \'/^Mem:/{print $2","$3","$7}\')"',
+      'echo "DISK:$(df -B1 / 2>/dev/null | awk \'NR==2{print $2","$3","$4}\')"'
+    ].join('; ')
+
+    try {
+      const { stdout } = await this.exec(profile, cmd, jump)
+      const m: ServerMetrics = { reachable: true }
+      for (const line of stdout.split('\n')) {
+        const [key, ...rest] = line.split(':')
+        const val = rest.join(':').trim()
+        if (!val) continue
+        if (key === 'OS') m.os = val
+        else if (key === 'KERNEL') m.kernel = val
+        else if (key === 'UPTIME') m.uptimeSec = Number(val) || undefined
+        else if (key === 'LOAD') {
+          const p = val.split(/\s+/).map(Number)
+          if (p.length >= 3) m.load = [p[0], p[1], p[2]]
+        } else if (key === 'CPU') m.cpuCount = Number(val) || undefined
+        else if (key === 'MEM') {
+          const [t, u, a] = val.split(',').map(Number)
+          m.memTotal = t || undefined
+          m.memUsed = u || undefined
+          m.memAvailable = a || undefined
+        } else if (key === 'DISK') {
+          const [t, u, a] = val.split(',').map(Number)
+          m.diskTotal = t || undefined
+          m.diskUsed = u || undefined
+          m.diskAvailable = a || undefined
+        }
+      }
+      return m
+    } catch (e) {
+      return { reachable: false, error: (e as Error).message }
+    }
   }
 
   // ---------------- SFTP ----------------

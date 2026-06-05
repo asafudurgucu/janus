@@ -40,8 +40,18 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   handle(IPC.vaultStatus, async () => ({
     exists: await vaultStore.exists(),
     unlocked: vaultStore.isUnlocked,
-    path: vaultStore.filePath
+    path: vaultStore.filePath,
+    hasRemembered: await vaultStore.hasRemembered()
   }))
+  handle(IPC.vaultRemember, async (password) => {
+    await vaultStore.rememberPassword(password as string)
+    return true
+  })
+  handle(IPC.vaultForget, async () => {
+    await vaultStore.forget()
+    return true
+  })
+  handle(IPC.vaultAutoUnlock, async () => vaultStore.autoUnlock())
   handle(IPC.vaultCreate, async (password) => {
     await vaultStore.create(password as string)
     return vaultStore.read()
@@ -95,6 +105,10 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   handle(IPC.sshExec, async (serverId, command) => {
     const profile = findServer(serverId as string)
     return ssh.exec(profile, command as string, jumpFor(profile))
+  })
+  handle(IPC.sshMetrics, async (serverId) => {
+    const profile = findServer(serverId as string)
+    return ssh.metrics(profile, jumpFor(profile))
   })
 
   // ---- SFTP ----

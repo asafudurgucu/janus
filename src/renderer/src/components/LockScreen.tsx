@@ -9,6 +9,7 @@ export default function LockScreen(): JSX.Element {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [remember, setRemember] = useState(false)
 
   const isCreate = !hasVault
 
@@ -21,8 +22,8 @@ export default function LockScreen(): JSX.Element {
     }
     setBusy(true)
     try {
-      if (isCreate) await createVault(password)
-      else await unlock(password)
+      if (isCreate) await createVault(password, remember)
+      else await unlock(password, remember)
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -107,6 +108,16 @@ export default function LockScreen(): JSX.Element {
               <span>{error}</span>
             </div>
           )}
+
+          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-400">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-4 w-4 accent-accent"
+            />
+            Bu cihazda beni hatırla (otomatik giriş)
+          </label>
 
           <button type="submit" disabled={busy} className="btn-primary w-full">
             {busy ? 'Lütfen bekle…' : isCreate ? 'Vault Oluştur' : 'Kilidi Aç'}
