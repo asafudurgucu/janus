@@ -290,8 +290,19 @@ function GroupNode({
 function ServerRow({ server, depth }: { server: ServerProfile; depth: number }): JSX.Element {
   const { selectedServerId, selectServer, openTerminal, openSftp, openDocker, openLogs, openVnc, openServerForm, deleteServer, duplicateServer, moveServerToGroup } =
     useStore()
-  const [menu, setMenu] = useState(false)
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const selected = selectedServerId === server.id
+
+  // Open the context menu at the cursor, clamped so it never spills off-screen.
+  function openMenu(e: React.MouseEvent): void {
+    e.preventDefault()
+    const MENU_W = 184
+    const MENU_H = 312
+    const x = Math.max(8, Math.min(e.clientX, window.innerWidth - MENU_W - 8))
+    const y = Math.max(8, Math.min(e.clientY, window.innerHeight - MENU_H - 8))
+    setMenuPos({ x, y })
+  }
+  const closeMenu = (): void => setMenuPos(null)
 
   return (
     <div
@@ -316,10 +327,7 @@ function ServerRow({ server, depth }: { server: ServerProfile; depth: number }):
       style={{ paddingLeft: depth * 12 + 8 }}
       onClick={() => selectServer(server.id)}
       onDoubleClick={() => openTerminal(server.id)}
-      onContextMenu={(e) => {
-        e.preventDefault()
-        setMenu(true)
-      }}
+      onContextMenu={openMenu}
     >
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: server.color || '#3a465c' }} />
       <div className="min-w-0 flex-1">
@@ -340,19 +348,23 @@ function ServerRow({ server, depth }: { server: ServerProfile; depth: number }):
         </button>
       </div>
 
-      {menu && (
+      {menuPos && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} onContextMenu={(e) => { e.preventDefault(); setMenu(false) }} />
-          <div className="absolute right-2 top-7 z-50 w-44 rounded-lg border border-ink-500 bg-ink-700 py-1 text-xs shadow-xl">
-            <MenuItem icon={TerminalIcon} label="Terminal aç" onClick={() => { openTerminal(server.id); setMenu(false) }} />
-            <MenuItem icon={FolderTree} label="SFTP aç" onClick={() => { openSftp(server.id); setMenu(false) }} />
-            <MenuItem icon={Box} label="Servisler / Docker" onClick={() => { openDocker(server.id); setMenu(false) }} />
-            <MenuItem icon={ScrollText} label="Loglar (canlı)" onClick={() => { openLogs(server.id); setMenu(false) }} />
-            <MenuItem icon={Monitor} label="Uzak masaüstü (VNC)" onClick={() => { openVnc(server.id); setMenu(false) }} />
-            <MenuItem icon={Pencil} label="Düzenle" onClick={() => { openServerForm(server); setMenu(false) }} />
-            <MenuItem icon={Copy} label="Çoğalt" onClick={() => { duplicateServer(server.id); setMenu(false) }} />
+          <div className="fixed inset-0 z-40" onClick={closeMenu} onContextMenu={(e) => { e.preventDefault(); closeMenu() }} />
+          <div
+            className="fixed z-50 w-44 rounded-lg border border-ink-500 bg-ink-700 py-1 text-xs shadow-2xl"
+            style={{ left: menuPos.x, top: menuPos.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MenuItem icon={TerminalIcon} label="Terminal aç" onClick={() => { openTerminal(server.id); closeMenu() }} />
+            <MenuItem icon={FolderTree} label="SFTP aç" onClick={() => { openSftp(server.id); closeMenu() }} />
+            <MenuItem icon={Box} label="Servisler / Docker" onClick={() => { openDocker(server.id); closeMenu() }} />
+            <MenuItem icon={ScrollText} label="Loglar (canlı)" onClick={() => { openLogs(server.id); closeMenu() }} />
+            <MenuItem icon={Monitor} label="Uzak masaüstü (VNC)" onClick={() => { openVnc(server.id); closeMenu() }} />
+            <MenuItem icon={Pencil} label="Düzenle" onClick={() => { openServerForm(server); closeMenu() }} />
+            <MenuItem icon={Copy} label="Çoğalt" onClick={() => { duplicateServer(server.id); closeMenu() }} />
             <div className="my-1 border-t border-ink-500" />
-            <MenuItem icon={Trash2} label="Sil" danger onClick={() => { if (confirm(`"${server.name}" silinsin mi?`)) deleteServer(server.id); setMenu(false) }} />
+            <MenuItem icon={Trash2} label="Sil" danger onClick={() => { if (confirm(`"${server.name}" silinsin mi?`)) deleteServer(server.id); closeMenu() }} />
           </div>
         </>
       )}

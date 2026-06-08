@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <filter id="sh2" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="30" stdDeviation="40" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <clipPath id="win2"><rect x="20" y="20" width="1240" height="760" rx="14"/></clipPath>
+  </defs>
+
+  <rect width="1280" height="800" fill="#06070a"/>
+  <g filter="url(#sh2)"><rect x="20" y="20" width="1240" height="760" rx="14" fill="#0f1113" stroke="#1d2024"/></g>
+
+  <g clip-path="url(#win2)">
+    <!-- Title bar -->
+    <rect x="20" y="20" width="1240" height="40" fill="#0f1113"/>
+    <circle cx="44" cy="40" r="6" fill="#fb5d6b"/><circle cx="64" cy="40" r="6" fill="#fbbf24"/><circle cx="84" cy="40" r="6" fill="#34d399"/>
+    <text x="120" y="45" fill="#e4e7ec" font-size="14" font-weight="700">Janus</text>
+    <text x="172" y="45" fill="#5b626f" font-size="12">SSH Manager  |  The Asaf Effect</text>
+    <line x1="20" y1="60" x2="1260" y2="60" stroke="#1d2024"/>
+
+    <!-- Rail + sidebar (dim) -->
+    <rect x="20" y="60" width="56" height="720" fill="#0f1113"/>
+    <rect x="32" y="116" width="32" height="32" rx="8" fill="#6366f1" fill-opacity="0.18"/>
+    <rect x="38" y="124" width="20" height="16" rx="3" fill="none" stroke="#818cf8" stroke-width="2"/>
+    <g fill="#3a4048"><rect x="32" y="74" width="32" height="32" rx="8"/><rect x="32" y="158" width="32" height="32" rx="8"/><rect x="32" y="200" width="32" height="32" rx="8"/></g>
+    <line x1="76" y1="60" x2="76" y2="780" stroke="#1d2024"/>
+    <rect x="76" y="60" width="244" height="720" fill="#0a0b0d"/>
+    <g font-size="13">
+      <rect x="88" y="120" width="224" height="34" rx="6" fill="#6366f1" fill-opacity="0.15"/>
+      <circle cx="108" cy="137" r="4" fill="#34d399"/><text x="122" y="141" fill="#fff">web-01</text>
+      <circle cx="108" cy="180" r="4" fill="#fbbf24"/><text x="122" y="184" fill="#e4e7ec">db-master</text>
+      <circle cx="108" cy="216" r="4" fill="#34d399"/><text x="122" y="220" fill="#e4e7ec">web-02</text>
+    </g>
+
+    <!-- Tab bar -->
+    <rect x="320" y="60" width="940" height="40" fill="#0f1113"/>
+    <rect x="320" y="60" width="160" height="40" fill="#0a0b0d"/>
+    <circle cx="338" cy="80" r="3" fill="#34d399"/><text x="350" y="84" fill="#fff" font-size="12">web-01</text>
+    <circle cx="498" cy="80" r="3" fill="#34d399"/><text x="510" y="84" fill="#8b93a1" font-size="12">SFTP · db-master</text>
+    <circle cx="690" cy="80" r="3" fill="#fbbf24"/><text x="702" y="84" fill="#8b93a1" font-size="12">Masaüstü · web-02</text>
+    <line x1="320" y1="100" x2="1260" y2="100" stroke="#1d2024"/>
+
+    <!-- Terminal body -->
+    <rect x="320" y="100" width="940" height="680" fill="#0a0b0d"/>
+    <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="13">
+      <text x="344" y="132" fill="#7c8595">╭─ Janus · web-01</text>
+      <text x="344" y="152" fill="#7c8595">│  root@10.0.0.11:22 üzerine bağlanılıyor…</text>
+      <text x="344" y="172" fill="#7c8595">│  SSH anahtarı/parola doğrulanıyor…</text>
+      <text x="344" y="192" fill="#7c8595">╰─ <tspan fill="#34d399">● bağlandı</tspan> <tspan fill="#7c8595">(412 ms)</tspan></text>
+
+      <text x="344" y="224" fill="#cbd5e1">Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.8.0 x86_64)</text>
+      <text x="344" y="252" fill="#34d399">root@web-01<tspan fill="#cbd5e1">:</tspan><tspan fill="#6366f1">~</tspan><tspan fill="#cbd5e1"># uptime</tspan></text>
+      <text x="344" y="272" fill="#cbd5e1"> 14:22:07 up 37 days,  3:14,  1 user,  load average: 0.18, 0.21, 0.24</text>
+      <text x="344" y="300" fill="#34d399">root@web-01<tspan fill="#cbd5e1">:</tspan><tspan fill="#6366f1">~</tspan><tspan fill="#cbd5e1"># docker ps --format "table {{.Names}}\t{{.Status}}"</tspan></text>
+      <text x="344" y="320" fill="#8b93a1">NAMES        STATUS</text>
+      <text x="344" y="340" fill="#cbd5e1">api          <tspan fill="#34d399">Up 12 days (healthy)</tspan></text>
+      <text x="344" y="360" fill="#cbd5e1">nginx        <tspan fill="#34d399">Up 12 days</tspan></text>
+      <text x="344" y="380" fill="#cbd5e1">worker       <tspan fill="#34d399">Up 3 hours</tspan></text>
+      <text x="344" y="408" fill="#34d399">root@web-01<tspan fill="#cbd5e1">:</tspan><tspan fill="#6366f1">~</tspan><tspan fill="#cbd5e1"># systemctl is-active nginx</tspan></text>
+      <text x="344" y="428" fill="#34d399">active</text>
+      <text x="344" y="456" fill="#34d399">root@web-01<tspan fill="#cbd5e1">:</tspan><tspan fill="#6366f1">~</tspan><tspan fill="#cbd5e1"># tail -f /var/log/nginx/access.log</tspan></text>
+      <text x="344" y="476" fill="#8b93a1">10.0.0.4 - - [08/Jun/2026:14:22:11] "GET /api/health" <tspan fill="#34d399">200</tspan> 12</text>
+      <text x="344" y="496" fill="#8b93a1">10.0.0.7 - - [08/Jun/2026:14:22:12] "POST /api/login" <tspan fill="#34d399">200</tspan> 540</text>
+      <text x="344" y="516" fill="#8b93a1">10.0.0.9 - - [08/Jun/2026:14:22:12] "GET /assets/app.js" <tspan fill="#fbbf24">304</tspan> 0</text>
+      <rect x="344" y="528" width="9" height="16" fill="#818cf8"/>
+    </g>
+  </g>
+</svg>
