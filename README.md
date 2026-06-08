@@ -24,7 +24,7 @@
 <br/>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/dashboard.svg" alt="Janus — Filo Paneli" width="900" />
+  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/dashboard.png" alt="Janus — Filo Paneli" width="900" />
 </p>
 
 ---
@@ -51,7 +51,7 @@ masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** s
 - **🎨 5 tema** · **⌘K komut paleti** · **👆 Touch ID kilidi** · **🔄 otomatik güncelleme**.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/terminal.svg" alt="Janus — Terminal" width="900" />
+  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/terminal.png" alt="Janus — Terminal" width="900" />
 </p>
 
 ## ⬇️ İndir
