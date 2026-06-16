@@ -29,19 +29,21 @@ function statusColor(status: Tab['status']): string {
 }
 
 export default function Workspace(): JSX.Element {
-  const { tabs, activeTabId, setActiveTab, closeTab, sidePanel } = useStore()
+  const { tabs, activeTabId, setActiveTab, closeTab, sidePanel, miniMode } = useStore()
 
-  // Non-server panels take over the whole workspace.
-  if (sidePanel === 'dashboard') return <FleetDashboard />
-  if (sidePanel === 'broadcast') return <BroadcastPanel />
-  if (sidePanel === 'snippets') return <SnippetsPanel />
-  if (sidePanel === 'tunnels') return <TunnelsPanel />
-  if (sidePanel === 'settings') return <SettingsPanel />
+  // Non-server panels take over the whole workspace (not in mini mode).
+  if (!miniMode) {
+    if (sidePanel === 'dashboard') return <FleetDashboard />
+    if (sidePanel === 'broadcast') return <BroadcastPanel />
+    if (sidePanel === 'snippets') return <SnippetsPanel />
+    if (sidePanel === 'tunnels') return <TunnelsPanel />
+    if (sidePanel === 'settings') return <SettingsPanel />
+  }
 
   return (
     <div className="flex min-w-0 flex-1 flex-col bg-ink-900">
-      {/* Tab bar */}
-      {tabs.length > 0 && (
+      {/* Tab bar (hidden in mini mode) */}
+      {tabs.length > 0 && !miniMode && (
         <div className="flex h-10 shrink-0 items-stretch overflow-x-auto border-b border-ink-600 bg-ink-800">
           {tabs.map((tab) => {
             const active = tab.id === activeTabId

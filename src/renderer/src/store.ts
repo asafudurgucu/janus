@@ -13,7 +13,7 @@ import type {
 // --- Lightweight UI-preference persistence (localStorage). NEVER store the
 // vault here — only non-sensitive UI state so the app remembers where you were.
 const LS_KEY = 'janus.ui'
-function loadPrefs(): { sidePanel?: UIState['sidePanel']; selectedServerId?: string | null } {
+function loadPrefs(): { sidePanel?: UIState['sidePanel']; selectedServerId?: string | null; notesOpen?: boolean } {
   try {
     return JSON.parse(localStorage.getItem(LS_KEY) || '{}')
   } catch {
@@ -66,6 +66,12 @@ interface UIState {
 
   // command palette
   paletteOpen: boolean
+
+  // floating notes
+  notesOpen: boolean
+
+  // mini ssh panel mode
+  miniMode: boolean
 }
 
 interface Actions {
@@ -124,6 +130,13 @@ interface Actions {
 
   // command palette
   setPalette: (open: boolean) => void
+
+  // notes
+  toggleNotes: () => void
+  setNotes: (text: string) => void
+
+  // mini mode
+  setMini: (on: boolean) => void
 }
 
 export const useStore = create<UIState & Actions>((set, get) => ({
@@ -146,6 +159,8 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   tabs: [],
   activeTabId: null,
   paletteOpen: false,
+  notesOpen: prefs.notesOpen ?? false,
+  miniMode: false,
 
   async init() {
     set({ loading: true })
@@ -405,5 +420,29 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   setTabStatus: (tabId, status) =>
     set({ tabs: get().tabs.map((t) => (t.id === tabId ? { ...t, status } : t)) }),
 
-  setPalette: (open) => set({ paletteOpen: open })
+  setPalette: (open) => set({ paletteOpen: open }),
+
+  toggleNotes() {
+    const open = !get().notesOpen
+    savePrefs({ notesOpen: open })
+    set({ notesOpen: open })
+  },
+
+  setNotes(text) {
+    const v = get().vault
+    if (!v) return
+    set({ vault: { ...v, notes: text } })
+    clearTimeout(notesTimer)
+    notesTimer = setTimeout(() => {
+      get().persist()
+    }, 600)
+  },
+
+  setMini(on) {
+    window.janus.window.setMini(on)
+    // Ensure the tab content (terminal) is what shows in mini mode.
+    set(on ? { miniMode: true, sidePanel: 'servers' } : { miniMode: false })
+  }
 }))
+
+let notesTimer: ReturnType<typeof setTimeout> | undefined

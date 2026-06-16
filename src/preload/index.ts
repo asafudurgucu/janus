@@ -131,7 +131,8 @@ const api = {
   window: {
     minimize: () => ipcRenderer.send(IPC.windowMinimize),
     maximize: () => ipcRenderer.send(IPC.windowMaximize),
-    close: () => ipcRenderer.send(IPC.windowClose)
+    close: () => ipcRenderer.send(IPC.windowClose),
+    setMini: (on: boolean) => ipcRenderer.send(IPC.windowSetMini, on)
   }
 }
 

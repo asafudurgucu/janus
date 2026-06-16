@@ -270,10 +270,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
 
 const THEMES: { id: ThemeId; name: string; bg: string; accent: string }[] = [
   { id: 'midnight', name: 'Midnight', bg: '#0a0b0d', accent: '#6366f1' },
+  { id: 'slate', name: 'Slate', bg: '#16191f', accent: '#6366f1' },
   { id: 'carbon', name: 'Carbon', bg: '#0d0d0f', accent: '#3b82f6' },
   { id: 'ocean', name: 'Ocean', bg: '#080c14', accent: '#06b6d4' },
   { id: 'plum', name: 'Plum', bg: '#0e0a12', accent: '#a855f7' },
-  { id: 'forest', name: 'Forest', bg: '#090e0b', accent: '#10b981' }
+  { id: 'forest', name: 'Forest', bg: '#090e0b', accent: '#10b981' },
+  { id: 'coffee', name: 'Coffee', bg: '#1c1612', accent: '#c7925c' },
+  { id: 'claude', name: 'Claude', bg: '#201c19', accent: '#cc7857' },
+  { id: 'sand', name: 'Sand', bg: '#24211c', accent: '#84a97a' }
 ]
 
 function ThemeSection({ current, onPick }: { current: ThemeId; onPick: (t: ThemeId) => void }): JSX.Element {

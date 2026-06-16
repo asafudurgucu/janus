@@ -64,6 +64,59 @@
   --accent-dim: 5 150 105;
 }
 
+/* Brighter neutral — less pure-black, higher contrast. */
+[data-theme='slate'] {
+  --ink-900: 22 25 31;
+  --ink-800: 28 32 39;
+  --ink-700: 37 42 51;
+  --ink-600: 49 55 66;
+  --ink-500: 63 70 83;
+  --ink-400: 96 105 120;
+  --accent: 99 102 241;
+  --accent-soft: 129 140 248;
+  --accent-dim: 79 70 229;
+}
+
+/* Warm brown — easy on the eyes. */
+[data-theme='coffee'] {
+  --ink-900: 28 22 18;
+  --ink-800: 36 29 23;
+  --ink-700: 46 37 30;
+  --ink-600: 60 49 39;
+  --ink-500: 78 63 50;
+  --ink-400: 112 92 74;
+  --accent: 199 146 92;
+  --accent-soft: 222 178 130;
+  --accent-dim: 168 120 70;
+}
+
+/* Claude-style warm dark with clay accent. */
+[data-theme='claude'] {
+  --ink-900: 32 28 25;
+  --ink-800: 41 36 32;
+  --ink-700: 52 46 41;
+  --ink-600: 67 60 53;
+  --ink-500: 86 77 68;
+  --ink-400: 120 108 96;
+  --accent: 204 120 87;
+  --accent-soft: 224 150 118;
+  --accent-dim: 176 96 66;
+}
+
+/* Warm taupe with sage accent. */
+[data-theme='sand'] {
+  --ink-900: 36 33 28;
+  --ink-800: 45 41 35;
+  --ink-700: 57 52 45;
+  --ink-600: 73 67 58;
+  --ink-500: 92 84 73;
+  --ink-400: 128 117 103;
+  --accent: 132 169 122;
+  --accent-soft: 163 196 154;
+  --accent-dim: 95 133 86;
+}
+
+
 * {
   box-sizing: border-box;
 }

@@ -228,5 +228,25 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   })
   ipcMain.on(IPC.windowClose, () => getWindow()?.close())
 
+  // Mini SSH panel mode — shrink + pin on top; restore previous bounds.
+  let prevBounds: Electron.Rectangle | null = null
+  ipcMain.on(IPC.windowSetMini, (_e, on: boolean) => {
+    const w = getWindow()
+    if (!w) return
+    if (on) {
+      prevBounds = w.getBounds()
+      w.setAlwaysOnTop(true, 'floating')
+      w.setMinimumSize(360, 240)
+      const { workArea } = require('electron').screen.getPrimaryDisplay()
+      const width = 480
+      const height = 380
+      w.setBounds({ width, height, x: workArea.x + workArea.width - width - 24, y: workArea.y + 24 }, true)
+    } else {
+      w.setAlwaysOnTop(false)
+      w.setMinimumSize(920, 600)
+      if (prevBounds) w.setBounds(prevBounds, true)
+    }
+  })
+
   return
 }

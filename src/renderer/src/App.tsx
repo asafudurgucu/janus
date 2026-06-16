@@ -8,6 +8,7 @@ import ServerForm from './components/ServerForm'
 import GroupForm from './components/GroupForm'
 import CommandPalette from './components/CommandPalette'
 import UpdateBanner from './components/UpdateBanner'
+import NotesWidget from './components/NotesWidget'
 
 export default function App(): JSX.Element {
   const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock } =
@@ -78,14 +79,17 @@ export default function App(): JSX.Element {
     )
   }
 
+  const miniMode = useStore((s) => s.miniMode)
+
   return (
     <div className="flex h-full flex-col bg-ink-900">
       <TitleBar />
       <div className="flex min-h-0 flex-1">
-        <Sidebar />
+        {!miniMode && <Sidebar />}
         <Workspace />
       </div>
       <UpdateBanner />
+      {!miniMode && <NotesWidget />}
       {serverFormOpen && <ServerForm />}
       {groupFormOpen && <GroupForm />}
       <CommandPalette />

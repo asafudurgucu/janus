@@ -12,7 +12,9 @@ import {
   Home,
   Link2,
   AlertCircle,
-  Loader2
+  Loader2,
+  Copy,
+  Check
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { Tab } from '../store'
@@ -33,6 +35,13 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  function copyPath(p: string): void {
+    navigator.clipboard.writeText(p)
+    setCopied(p)
+    setTimeout(() => setCopied((c) => (c === p ? null : c)), 1200)
+  }
 
   const load = useCallback(
     async (target: string) => {
@@ -92,10 +101,15 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
         <button onClick={() => load(path)} className="btn-ghost px-2 py-1.5" title="Yenile">
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
         </button>
-        <div className="mx-2 flex flex-1 items-center gap-2 truncate rounded-md border border-ink-500 bg-ink-900 px-3 py-1.5 text-xs text-slate-300">
+        <button
+          onClick={() => copyPath(path)}
+          title="Geçerli yolu kopyala"
+          className="mx-2 flex flex-1 items-center gap-2 truncate rounded-md border border-ink-500 bg-ink-900 px-3 py-1.5 text-xs text-slate-300 hover:border-accent/60"
+        >
           <Link2 size={13} className="shrink-0 text-slate-500" />
-          <span className="truncate font-mono">{displayPath}</span>
-        </div>
+          <span className="flex-1 truncate text-left font-mono">{displayPath}</span>
+          {copied === path ? <Check size={13} className="shrink-0 text-good" /> : <Copy size={13} className="shrink-0 text-slate-500" />}
+        </button>
         <button
           onClick={() => action('upload', async () => { await window.janus.sftp.upload(serverId, path === '.' ? '.' : path) })}
           className="btn-ghost border border-ink-500"
@@ -157,6 +171,13 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
                 <td className="px-4 py-1.5 text-xs text-slate-500">{new Date(e.mtime).toLocaleString('tr-TR')}</td>
                 <td className="px-4 py-1.5">
                   <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => copyPath(e.path)}
+                      className="rounded p-1 text-slate-400 hover:bg-ink-500 hover:text-white"
+                      title="Yolu kopyala"
+                    >
+                      {copied === e.path ? <Check size={13} className="text-good" /> : <Copy size={13} />}
+                    </button>
                     {e.type === 'file' && (
                       <button
                         onClick={() => action(`dl-${e.path}`, async () => { await window.janus.sftp.download(serverId, e.path) })}

@@ -64,6 +64,7 @@ export const IPC = {
   windowMinimize: 'window:minimize',
   windowMaximize: 'window:maximize',
   windowClose: 'window:close',
+  windowSetMini: 'window:set-mini',
 
   // Auto-update
   updateCheck: 'update:check',

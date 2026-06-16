@@ -71,7 +71,16 @@ export interface TunnelRule {
   autoStart?: boolean
 }
 
-export type ThemeId = 'midnight' | 'carbon' | 'ocean' | 'plum' | 'forest'
+export type ThemeId =
+  | 'midnight'
+  | 'slate'
+  | 'carbon'
+  | 'ocean'
+  | 'plum'
+  | 'forest'
+  | 'coffee'
+  | 'claude'
+  | 'sand'
 
 export interface AppSettings {
   theme: ThemeId
@@ -93,6 +102,8 @@ export interface Vault {
   snippets: Snippet[]
   tunnels: TunnelRule[]
   settings: AppSettings
+  /** Project-wide encrypted scratchpad (passwords, notes). */
+  notes?: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -114,7 +125,8 @@ export function emptyVault(): Vault {
     groups: [],
     snippets: [],
     tunnels: [],
-    settings: { ...DEFAULT_SETTINGS }
+    settings: { ...DEFAULT_SETTINGS },
+    notes: ''
   }
 }
 

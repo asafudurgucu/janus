@@ -40,8 +40,11 @@ function baseConfig(profile: ServerProfile): ConnectConfig {
     host: profile.host,
     port: profile.port || 22,
     username: profile.username,
-    readyTimeout: 20000,
-    keepaliveInterval: (profile.keepaliveInterval ?? 30) * 1000,
+    readyTimeout: 25000,
+    // Send keepalives frequently and tolerate several missed replies before
+    // declaring the link dead — keeps sessions alive through NAT/idle drops.
+    keepaliveInterval: (profile.keepaliveInterval ?? 20) * 1000,
+    keepaliveCountMax: 6,
     // Many servers only offer keyboard-interactive for password logins; let
     // ssh2 fall back to it and answer the prompts with the stored password.
     tryKeyboard: profile.authMethod === 'password',

@@ -47,8 +47,10 @@ masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** s
 - **🐳 Docker & systemd** — konteyner/servis başlat-durdur-restart, süreç yönetimi, canlı log akışı.
 - **📁 SFTP & port tünelleri** — dosya transferi + local/remote/dynamic forwarding.
 - **🔑 SSH anahtar yöneticisi** — uygulama içinde anahtar üret, sunucuya tek tıkla kur.
+- **📝 Yüzen not defteri** — şifreler/notlar için proje geneli, sürüklenip boyutlandırılabilen, şifreli kayıtlı pano.
+- **🪟 Mini panel modu** — pencereyi küçült, üstte sabitle; web/editör yanına koyabileceğin kompakt terminal.
 - **🗂️ Gruplama & etiketleme** — sürükle-bırak ile düzenle, anında ara.
-- **🎨 5 tema** · **⌘K komut paleti** · **👆 Touch ID kilidi** · **🔄 otomatik güncelleme**.
+- **🎨 9 tema** (Midnight, Slate, Coffee, Claude, Sand…) · **⌘K komut paleti** · **👆 Touch ID kilidi** · **🔄 otomatik güncelleme**.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/terminal.png" alt="Janus — Terminal" width="900" />
