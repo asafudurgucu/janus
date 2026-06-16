@@ -11,7 +11,7 @@ import UpdateBanner from './components/UpdateBanner'
 import NotesWidget from './components/NotesWidget'
 
 export default function App(): JSX.Element {
-  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock } =
+  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock, miniMode } =
     useStore()
 
   useEffect(() => {
@@ -78,8 +78,6 @@ export default function App(): JSX.Element {
       </div>
     )
   }
-
-  const miniMode = useStore((s) => s.miniMode)
 
   return (
     <div className="flex h-full flex-col bg-ink-900">
