@@ -64,7 +64,9 @@ export default function Sidebar(): JSX.Element {
     openServerForm,
     openGroupForm,
     moveServerToGroup,
-    moveGroupToParent
+    moveGroupToParent,
+    copilotOpen,
+    toggleCopilot
   } = useStore()
 
   const servers = vault?.servers ?? []
@@ -96,11 +98,15 @@ export default function Sidebar(): JSX.Element {
       <div className="flex w-14 flex-col items-center gap-1 border-r border-ink-600 bg-ink-800 py-3">
         {railItems.map((item) => {
           const Icon = item.icon
-          const active = sidePanel === item.key
+          const isCopilot = item.key === 'copilot'
+          const active = isCopilot ? copilotOpen : sidePanel === item.key
           return (
             <button
               key={item.key}
-              onClick={() => setSidePanel(item.key)}
+              onClick={() => {
+                if (item.key === 'copilot') toggleCopilot()
+                else setSidePanel(item.key)
+              }}
               title={item.label}
               className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
                 active ? 'bg-accent/20 text-accent' : 'text-slate-400 hover:bg-ink-600 hover:text-white'

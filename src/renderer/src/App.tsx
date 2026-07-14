@@ -9,10 +9,11 @@ import GroupForm from './components/GroupForm'
 import CommandPalette from './components/CommandPalette'
 import UpdateBanner from './components/UpdateBanner'
 import NotesWidget from './components/NotesWidget'
+import CopilotPanel from './components/CopilotPanel'
 import { ratios, record, checkAlerts } from './lib/metricsHistory'
 
 export default function App(): JSX.Element {
-  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock, miniMode } =
+  const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock, miniMode, copilotOpen, toggleCopilot } =
     useStore()
 
   useEffect(() => {
@@ -86,11 +87,14 @@ export default function App(): JSX.Element {
       } else if (mod && e.key.toLowerCase() === 'w') {
         e.preventDefault()
         closeActiveTab()
+      } else if (mod && e.key.toLowerCase() === 'i') {
+        e.preventDefault()
+        toggleCopilot()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [locked, setPalette, openServerForm, closeActiveTab])
+  }, [locked, setPalette, openServerForm, closeActiveTab, toggleCopilot])
 
   if (loading) {
     return (
@@ -115,6 +119,11 @@ export default function App(): JSX.Element {
       <div className="flex min-h-0 flex-1">
         {!miniMode && <Sidebar />}
         <Workspace />
+        {!miniMode && copilotOpen && (
+          <div className="flex w-[384px] shrink-0 flex-col border-l border-ink-600">
+            <CopilotPanel dock />
+          </div>
+        )}
       </div>
       <UpdateBanner />
       {!miniMode && <NotesWidget />}

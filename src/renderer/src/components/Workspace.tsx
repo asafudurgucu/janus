@@ -13,7 +13,6 @@ import SettingsPanel from './SettingsPanel'
 import FleetDashboard from './FleetDashboard'
 import BroadcastPanel from './BroadcastPanel'
 import DatabasesPanel from './DatabasesPanel'
-import CopilotPanel from './CopilotPanel'
 import ServerDetail from './ServerDetail'
 import type { Tab } from '../store'
 
@@ -42,7 +41,6 @@ export default function Workspace(): JSX.Element {
     if (sidePanel === 'dashboard') return <FleetDashboard />
     if (sidePanel === 'broadcast') return <BroadcastPanel />
     if (sidePanel === 'databases') return <DatabasesPanel />
-    if (sidePanel === 'copilot') return <CopilotPanel />
     if (sidePanel === 'snippets') return <SnippetsPanel />
     if (sidePanel === 'tunnels') return <TunnelsPanel />
     if (sidePanel === 'settings') return <SettingsPanel />

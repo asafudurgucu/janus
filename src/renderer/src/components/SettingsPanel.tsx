@@ -273,6 +273,12 @@ const AI_KEY_HINT: Record<AiProvider, string> = {
   openrouter: 'openrouter.ai/keys — tek anahtarla Claude, GPT, Gemini, Llama…',
   custom: 'Ollama/LM Studio için anahtar gerekmez'
 }
+const AI_KEY_URL: Partial<Record<AiProvider, string>> = {
+  anthropic: 'https://console.anthropic.com/settings/keys',
+  openai: 'https://platform.openai.com/api-keys',
+  google: 'https://aistudio.google.com/app/apikey',
+  openrouter: 'https://openrouter.ai/keys'
+}
 
 function AiSection(): JSX.Element {
   const { vault, updateSettings } = useStore()
@@ -318,7 +324,14 @@ function AiSection(): JSX.Element {
         </div>
       )}
       <div>
-        <label className="label">API anahtarı {ai.provider === 'custom' && <span className="text-slate-600">(opsiyonel)</span>}</label>
+        <label className="label flex items-center justify-between">
+          <span>API anahtarı {ai.provider === 'custom' && <span className="text-slate-600">(opsiyonel)</span>}</span>
+          {AI_KEY_URL[ai.provider] && (
+            <button onClick={() => window.open(AI_KEY_URL[ai.provider])} className="normal-case text-accent hover:underline">
+              🔗 Anahtar al
+            </button>
+          )}
+        </label>
         <input
           type="password"
           value={ai.apiKey}
@@ -328,6 +341,10 @@ function AiSection(): JSX.Element {
         />
       </div>
       <p className="text-[11px] text-slate-600">Anahtar: {AI_KEY_HINT[ai.provider]}</p>
+      <div className="rounded-md border border-ink-600 bg-ink-900/40 px-3 py-2 text-[11px] text-slate-500">
+        💡 <b className="text-slate-400">En kolayı:</b> <b className="text-accent">OpenRouter</b> — tek anahtarla Claude,
+        GPT, Gemini, Llama hepsi. Ya da <b className="text-accent">Ollama</b> (Özel) — bilgisayarında yerel, anahtar bile gerekmez.
+      </div>
     </Section>
   )
 }

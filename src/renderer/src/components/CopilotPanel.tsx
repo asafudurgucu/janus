@@ -12,8 +12,9 @@ const SUGGESTIONS = [
 
 const CTX_ESTIMATE = 100_000 // rough soft window for the usage bar
 
-export default function CopilotPanel(): JSX.Element {
-  const { vault, selectedServerId, setSidePanel } = useStore()
+export default function CopilotPanel({ dock = false }: { dock?: boolean }): JSX.Element {
+  const { vault, selectedServerId, setSidePanel, toggleCopilot } = useStore()
+  const wrap = dock ? '' : 'mx-auto max-w-2xl'
   const server = vault?.servers.find((s) => s.id === selectedServerId)
   const ai = vault?.settings.ai
   const configured = !!ai && (ai.provider === 'custom' || !!ai.apiKey)
@@ -83,34 +84,42 @@ export default function CopilotPanel(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col bg-ink-900">
-      <div className="flex items-center justify-between border-b border-ink-600 px-6 py-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-lg font-bold text-white">
-            <Sparkles size={20} className="text-accent" /> AI Copilot
+      <div className={`flex items-center justify-between border-b border-ink-600 ${dock ? 'px-3 py-2.5' : 'px-6 py-4'}`}>
+        <div className="min-w-0">
+          <h1 className={`flex items-center gap-2 font-bold text-white ${dock ? 'text-sm' : 'text-lg'}`}>
+            <Sparkles size={dock ? 15 : 20} className="text-accent" /> AI Copilot
           </h1>
-          <p className="flex items-center gap-1.5 text-sm text-slate-500">
+          <p className="flex items-center gap-1.5 truncate text-xs text-slate-500">
             {server ? (
               <>
-                <Server size={12} /> bağlam: {server.name}
+                <Server size={11} /> {server.name}
               </>
             ) : (
-              'genel asistan · soldan bir sunucu seçersen bağlamı bilir'
+              'genel asistan'
             )}
           </p>
         </div>
-        {messages.length > 0 && (
-          <button onClick={() => setMessages([])} className="btn-ghost border border-ink-500 text-xs">
-            <Trash2 size={14} /> Temizle
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="rounded p-1.5 text-slate-400 hover:bg-ink-600 hover:text-white" title="Temizle">
+              <Trash2 size={15} />
+            </button>
+          )}
+          {dock && (
+            <button onClick={toggleCopilot} className="rounded p-1.5 text-slate-400 hover:bg-ink-600 hover:text-white" title="Kapat (⌘I)">
+              <X size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {!configured ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-slate-500">
           <Sparkles size={40} className="opacity-40" />
-          <p className="max-w-sm">
-            AI Copilot'u kullanmak için kendi API anahtarını (Claude veya OpenAI) ekle. Anahtarın şifreli
-            vault'ta saklanır, yalnızca senin adına isteği yapar.
+          <p className="max-w-sm px-4 text-sm">
+            AI Copilot'u açmak için bir sağlayıcı bağla. En kolayı: <b className="text-accent">OpenRouter</b> (tek
+            anahtar → tüm modeller) ya da <b className="text-accent">Ollama</b> (yerel, anahtar gerekmez). Anahtarın
+            şifreli vault'ta saklanır.
           </p>
           <button onClick={() => setSidePanel('settings')} className="btn-primary">
             <Settings2 size={15} /> Ayarlar → AI Copilot
@@ -118,9 +127,9 @@ export default function CopilotPanel(): JSX.Element {
         </div>
       ) : (
         <>
-          <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          <div className={`min-h-0 flex-1 overflow-y-auto ${dock ? 'p-3' : 'p-6'}`}>
             {messages.length === 0 && (
-              <div className="mx-auto max-w-2xl">
+              <div className={wrap}>
                 <p className="mb-3 text-sm text-slate-500">Bir şey sor ya da hızlı başla:</p>
                 <div className="flex flex-wrap gap-2">
                   {SUGGESTIONS.map((s) => (
@@ -131,7 +140,7 @@ export default function CopilotPanel(): JSX.Element {
                 </div>
               </div>
             )}
-            <div className="mx-auto max-w-2xl space-y-4">
+            <div className={`${wrap} space-y-4`}>
               {messages.map((m, i) => (
                 <Message key={i} msg={m} />
               ))}
@@ -150,8 +159,8 @@ export default function CopilotPanel(): JSX.Element {
             </div>
           </div>
 
-          <div className="border-t border-ink-600 p-4">
-            <div className="mx-auto max-w-2xl">
+          <div className={`border-t border-ink-600 ${dock ? 'p-3' : 'p-4'}`}>
+            <div className={wrap}>
               {/* context + limit indicator */}
               <div className="mb-1.5 flex items-center gap-2 text-[10px] text-slate-600">
                 <span>bağlam ~{(tokenEstimate / 1000).toFixed(1)}k token</span>

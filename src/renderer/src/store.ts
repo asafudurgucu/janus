@@ -14,7 +14,12 @@ import type {
 // --- Lightweight UI-preference persistence (localStorage). NEVER store the
 // vault here — only non-sensitive UI state so the app remembers where you were.
 const LS_KEY = 'janus.ui'
-function loadPrefs(): { sidePanel?: UIState['sidePanel']; selectedServerId?: string | null; notesOpen?: boolean } {
+function loadPrefs(): {
+  sidePanel?: UIState['sidePanel']
+  selectedServerId?: string | null
+  notesOpen?: boolean
+  copilotOpen?: boolean
+} {
   try {
     return JSON.parse(localStorage.getItem(LS_KEY) || '{}')
   } catch {
@@ -53,7 +58,7 @@ interface UIState {
   selectedServerId: string | null
   search: string
   activeTagFilter: string | null
-  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'databases' | 'copilot' | 'snippets' | 'tunnels' | 'settings'
+  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'databases' | 'snippets' | 'tunnels' | 'settings'
 
   // modals
   editingServer: ServerProfile | null
@@ -73,6 +78,9 @@ interface UIState {
 
   // mini ssh panel mode
   miniMode: boolean
+
+  // AI copilot right dock
+  copilotOpen: boolean
 }
 
 interface Actions {
@@ -150,6 +158,9 @@ interface Actions {
 
   // mini mode
   setMini: (on: boolean) => void
+
+  // copilot dock
+  toggleCopilot: () => void
 }
 
 export const useStore = create<UIState & Actions>((set, get) => ({
@@ -174,6 +185,7 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   paletteOpen: false,
   notesOpen: prefs.notesOpen ?? false,
   miniMode: false,
+  copilotOpen: prefs.copilotOpen ?? false,
 
   async init() {
     set({ loading: true })
@@ -542,6 +554,12 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     window.janus.window.setMini(on)
     // Ensure the tab content (terminal) is what shows in mini mode.
     set(on ? { miniMode: true, sidePanel: 'servers' } : { miniMode: false })
+  },
+
+  toggleCopilot() {
+    const open = !get().copilotOpen
+    savePrefs({ copilotOpen: open })
+    set({ copilotOpen: open })
   }
 }))
 
