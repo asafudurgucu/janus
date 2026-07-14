@@ -49,6 +49,12 @@ export const IPC = {
   // Desktop notifications
   notifyShow: 'notify:show',
 
+  // Database manager
+  dbTest: 'db:test',
+  dbQuery: 'db:query',
+  dbTables: 'db:tables',
+  dbClose: 'db:close',
+
   // System power events (main → renderer)
   systemResume: 'system:resume',
   systemSuspend: 'system:suspend',

@@ -176,7 +176,8 @@ class VaultStore {
       snippets: v.snippets ?? [],
       tunnels: v.tunnels ?? [],
       settings: { ...DEFAULT_SETTINGS, ...(v.settings ?? {}) },
-      notes: v.notes ?? ''
+      notes: v.notes ?? '',
+      databases: v.databases ?? []
     }
   }
 }

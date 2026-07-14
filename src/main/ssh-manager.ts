@@ -564,6 +564,42 @@ export class SSHManager {
     })
   }
 
+  /**
+   * Open an ephemeral local TCP forward (127.0.0.1:localPort → dstHost:dstPort)
+   * through the server's SSH. Used to tunnel database connections.
+   */
+  async openLocalForward(
+    profile: ServerProfile,
+    dstHost: string,
+    dstPort: number,
+    jump?: ServerProfile | null
+  ): Promise<{ localPort: number; close: () => void }> {
+    const client = await this.connectClient(profile, jump)
+    return new Promise((resolve, reject) => {
+      const server = createServer((sock: Socket) => {
+        client.forwardOut(sock.remoteAddress || '127.0.0.1', sock.remotePort || 0, dstHost, dstPort, (err, stream) => {
+          if (err) {
+            sock.destroy()
+            return
+          }
+          sock.pipe(stream).pipe(sock)
+        })
+      })
+      server.on('error', reject)
+      server.listen(0, '127.0.0.1', () => {
+        const addr = server.address()
+        const localPort = typeof addr === 'object' && addr ? addr.port : 0
+        resolve({
+          localPort,
+          close: () => {
+            server.close()
+            client.end()
+          }
+        })
+      })
+    })
+  }
+
   /** Tear everything down (called on lock / quit). */
   shutdown(): void {
     for (const id of [...this.shells.keys()]) this.disconnect(id)

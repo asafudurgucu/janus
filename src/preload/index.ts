@@ -123,6 +123,13 @@ const api = {
     export: () => invoke<string>(IPC.sshConfigExport)
   },
   notify: (title: string, body: string) => ipcRenderer.send(IPC.notifyShow, title, body),
+  db: {
+    test: (conn: import('../shared/types').DbConnection) => invoke<boolean>(IPC.dbTest, conn),
+    query: (conn: import('../shared/types').DbConnection, sql: string) =>
+      invoke<import('../shared/types').DbQueryResult>(IPC.dbQuery, conn, sql),
+    tables: (conn: import('../shared/types').DbConnection) => invoke<string[]>(IPC.dbTables, conn),
+    close: (id: string) => invoke<boolean>(IPC.dbClose, id)
+  },
   power: {
     onResume: (cb: () => void) => {
       const listener = (): void => cb()

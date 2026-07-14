@@ -21,7 +21,8 @@ import {
   Box,
   ScrollText,
   Monitor,
-  MonitorPlay
+  MonitorPlay,
+  Database
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerProfile, Group } from '@shared/types'
@@ -43,6 +44,7 @@ const railItems = [
   { key: 'dashboard', icon: LayoutDashboard, label: 'Filo Paneli' },
   { key: 'servers', icon: Server, label: 'Sunucular' },
   { key: 'broadcast', icon: Radio, label: 'Broadcast' },
+  { key: 'databases', icon: Database, label: 'Veritabanları' },
   { key: 'snippets', icon: Code2, label: 'Snippet\'ler' },
   { key: 'tunnels', icon: Network, label: 'Tüneller' },
   { key: 'settings', icon: Settings, label: 'Ayarlar' }

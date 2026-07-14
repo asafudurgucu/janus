@@ -6,7 +6,8 @@ import { setupAutoUpdater, updater } from './updater'
 import { generateKey } from './keygen'
 import { launchRdp } from './rdp'
 import { importSshConfig, exportSshConfig } from './sshconfig'
-import type { KeyType } from '@shared/types'
+import { DbManager } from './db-manager'
+import type { KeyType, DbConnection } from '@shared/types'
 import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
 
 /** Wrap a handler so it always returns a tidy IpcResult and never throws across IPC. */
@@ -39,6 +40,10 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     getWindow()?.webContents.send(channel, payload)
   }
   const ssh = new SSHManager(emit)
+  const dbm = new DbManager((sshServerId, host, port) => {
+    const p = findServer(sshServerId)
+    return ssh.openLocalForward(p, host, port, jumpFor(p))
+  })
 
   // ---- Vault lifecycle ----
   handle(IPC.vaultStatus, async () => ({
@@ -63,6 +68,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   handle(IPC.vaultUnlock, async (password) => vaultStore.unlock(password as string))
   handle(IPC.vaultLock, async () => {
     ssh.shutdown()
+    dbm.shutdown()
     vaultStore.lock()
     return true
   })
@@ -145,6 +151,15 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   // ---- SSH config import/export ----
   handle(IPC.sshConfigImport, async () => importSshConfig())
   handle(IPC.sshConfigExport, async () => exportSshConfig(vaultStore.read().servers))
+
+  // ---- Database manager ----
+  handle(IPC.dbTest, async (conn) => dbm.test(conn as DbConnection))
+  handle(IPC.dbQuery, async (conn, sql) => dbm.query(conn as DbConnection, sql as string))
+  handle(IPC.dbTables, async (conn) => dbm.tables(conn as DbConnection))
+  handle(IPC.dbClose, async (id) => {
+    await dbm.close(id as string)
+    return true
+  })
 
   // ---- Desktop notifications ----
   ipcMain.on(IPC.notifyShow, (_e, title: string, body: string) => {

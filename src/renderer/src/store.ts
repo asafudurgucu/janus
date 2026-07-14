@@ -7,7 +7,8 @@ import type {
   Snippet,
   TunnelRule,
   AppSettings,
-  SessionStatus
+  SessionStatus,
+  DbConnection
 } from '@shared/types'
 
 // --- Lightweight UI-preference persistence (localStorage). NEVER store the
@@ -30,7 +31,7 @@ function savePrefs(patch: Record<string, unknown>): void {
 }
 const prefs = loadPrefs()
 
-export type TabKind = 'terminal' | 'sftp' | 'docker' | 'logs' | 'vnc'
+export type TabKind = 'terminal' | 'sftp' | 'docker' | 'logs' | 'vnc' | 'db'
 
 export interface Tab {
   id: string
@@ -52,7 +53,7 @@ interface UIState {
   selectedServerId: string | null
   search: string
   activeTagFilter: string | null
-  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'snippets' | 'tunnels' | 'settings'
+  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'databases' | 'snippets' | 'tunnels' | 'settings'
 
   // modals
   editingServer: ServerProfile | null
@@ -103,6 +104,11 @@ interface Actions {
   // tunnel CRUD
   upsertTunnel: (t: TunnelRule) => Promise<void>
   deleteTunnel: (id: string) => Promise<void>
+
+  // database CRUD
+  upsertDatabase: (d: DbConnection) => Promise<void>
+  deleteDatabase: (id: string) => Promise<void>
+  openDb: (connId: string) => void
 
   // settings
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
@@ -346,6 +352,31 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     if (!v) return
     set({ vault: { ...v, tunnels: v.tunnels.filter((t) => t.id !== id) } })
     await get().persist()
+  },
+
+  async upsertDatabase(d) {
+    const v = get().vault
+    if (!v) return
+    const list = v.databases ?? []
+    const idx = list.findIndex((x) => x.id === d.id)
+    const databases = idx >= 0 ? list.map((x) => (x.id === d.id ? d : x)) : [...list, d]
+    set({ vault: { ...v, databases } })
+    await get().persist()
+  },
+
+  async deleteDatabase(id) {
+    const v = get().vault
+    if (!v) return
+    set({ vault: { ...v, databases: (v.databases ?? []).filter((d) => d.id !== id) } })
+    await get().persist()
+  },
+
+  openDb(connId) {
+    const v = get().vault
+    const conn = (v?.databases ?? []).find((d) => d.id === connId)
+    if (!conn) return
+    const tab: Tab = { id: uuid(), kind: 'db', serverId: connId, title: `${conn.name}`, status: 'connecting' }
+    set({ tabs: [...get().tabs, tab], activeTabId: tab.id })
   },
 
   async updateSettings(patch) {

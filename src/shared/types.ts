@@ -108,6 +108,7 @@ export interface Vault {
   settings: AppSettings
   /** Project-wide encrypted scratchpad (passwords, notes). */
   notes?: string
+  databases?: DbConnection[]
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -131,7 +132,8 @@ export function emptyVault(): Vault {
     snippets: [],
     tunnels: [],
     settings: { ...DEFAULT_SETTINGS },
-    notes: ''
+    notes: '',
+    databases: []
   }
 }
 
@@ -194,6 +196,34 @@ export interface UpdateStatus {
   percent?: number
   error?: string
   manualOnly?: boolean // update must be installed manually (e.g. unsigned macOS)
+}
+
+// ---- Database manager ----
+
+export type DbType = 'postgres' | 'mysql' | 'redis'
+
+export interface DbConnection {
+  id: string
+  name: string
+  type: DbType
+  host: string
+  port: number
+  username?: string
+  password?: string
+  database?: string
+  /** Tunnel the DB connection through this server's SSH (null = direct). */
+  sshServerId?: string | null
+  color?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface DbQueryResult {
+  columns: string[]
+  rows: Record<string, unknown>[]
+  rowCount: number
+  durationMs: number
+  notice?: string
 }
 
 // ---- SSH key generation ----
