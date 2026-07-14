@@ -44,7 +44,7 @@ masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** s
 - **🖱️ VNC uzak masaüstü** — sunucunun ekranına SSH tüneli üzerinden şifreli bağlan, fare/klavye kontrolü.
 - **🪟 RDP (Windows uzak masaüstü)** — sistemin RDP istemcisini tek tıkla sunucuya bağlı açar (Mac/Win/Linux).
 - **🗄️ Veritabanı yöneticisi** — PostgreSQL / MySQL / Redis'e SSH tüneli üzerinden bağlan, sorgu çalıştır, tablo gez.
-- **📊 Filo paneli** — tüm sunucuların CPU/RAM/disk/uptime durumu canlı, tek ekranda.
+- **📊 Filo paneli** — tüm sunucuların CPU/RAM/disk durumu canlı, **geçmiş grafikleriyle**; %90 eşiği aşılınca uyarı (arka planda izleme dahil).
 - **📡 Broadcast** — bir komutu onlarca sunucuda aynı anda çalıştır, çıktıları yan yana gör.
 - **🐳 Docker & systemd** — konteyner/servis başlat-durdur-restart, süreç yönetimi, canlı log akışı.
 - **📁 SFTP & port tünelleri** — dosya transferi, **uzak dosya düzenleme**, yol kopyalama + local/remote/dynamic forwarding.

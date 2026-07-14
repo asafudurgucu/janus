@@ -297,6 +297,15 @@ function IntegrationsSection(): JSX.Element {
         />
         <Bell size={14} className="text-slate-500" /> Masaüstü bildirimleri (komut bitince, sunucu düşünce)
       </label>
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+        <input
+          type="checkbox"
+          checked={s.backgroundMonitor}
+          onChange={(e) => updateSettings({ backgroundMonitor: e.target.checked })}
+          className="h-4 w-4 accent-accent"
+        />
+        Arka planda tüm sunucuları izle — geçmiş grafikleri + %90 eşik uyarıları (60sn'de bir)
+      </label>
 
       <div className="mt-2 border-t border-ink-600 pt-3">
         <p className="mb-2 text-xs text-slate-500">

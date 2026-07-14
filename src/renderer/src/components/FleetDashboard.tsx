@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { LayoutDashboard, RefreshCw, Terminal as TerminalIcon, Server, Cpu, Loader2 } from 'lucide-react'
 import { useStore } from '../store'
 import { fmtBytes, fmtUptime, tier } from '../lib/metrics'
+import { ratios, record, checkAlerts, history } from '../lib/metricsHistory'
+import Sparkline from './Sparkline'
 import type { ServerMetrics } from '@shared/types'
 
 type MetricMap = Record<string, ServerMetrics | 'loading' | undefined>
@@ -35,6 +37,11 @@ export default function FleetDashboard(): JSX.Element {
             notify('Sunucu çevrimdışı', `${s.name} (${s.host}) yanıt vermiyor.`)
           }
           prevReach.current[s.id] = r.reachable
+          if (r.reachable) {
+            const rt = ratios(r)
+            record(s.id, { t: Date.now(), ...rt })
+            checkAlerts(s.id, s.name, rt, notify)
+          }
         } catch (e) {
           setMetrics((m) => ({ ...m, [s.id]: { reachable: false, error: (e as Error).message } }))
           prevReach.current[s.id] = false
@@ -97,6 +104,7 @@ export default function FleetDashboard(): JSX.Element {
                 host={`${s.username}@${s.host}`}
                 color={s.color}
                 m={metrics[s.id]}
+                hist={history(s.id).map((x) => x.mem)}
                 onOpen={() => openTerminal(s.id)}
                 onSelect={() => {
                   selectServer(s.id)
@@ -116,6 +124,7 @@ function Card({
   host,
   color,
   m,
+  hist,
   onOpen,
   onSelect
 }: {
@@ -123,6 +132,7 @@ function Card({
   host: string
   color?: string
   m: ServerMetrics | 'loading' | undefined
+  hist: number[]
   onOpen: () => void
   onSelect: () => void
 }): JSX.Element {
@@ -168,6 +178,12 @@ function Card({
               <span className="text-slate-600">/{data?.cpuCount ?? '?'}</span>
             </span>
             <span>uptime {fmtUptime(data?.uptimeSec)}</span>
+          </div>
+          <div className="mt-1 border-t border-ink-700 pt-2">
+            <div className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">RAM geçmişi</div>
+            <div className="h-[30px] w-full">
+              <Sparkline values={hist} width={280} height={30} color={color || '#818cf8'} threshold={0.9} />
+            </div>
           </div>
         </div>
       )}

@@ -22,6 +22,8 @@ import {
   MonitorPlay
 } from 'lucide-react'
 import { useStore } from '../store'
+import { ratios, record, history } from '../lib/metricsHistory'
+import Sparkline from './Sparkline'
 import type { ServerMetrics } from '@shared/types'
 
 function timeAgo(ts?: number): string {
@@ -180,7 +182,9 @@ function MetricsCard({ serverId }: { serverId: string }): JSX.Element {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setData(await window.janus.ssh.metrics(serverId))
+      const m = await window.janus.ssh.metrics(serverId)
+      setData(m)
+      if (m.reachable) record(serverId, { t: Date.now(), ...ratios(m) })
     } catch (e) {
       setData({ reachable: false, error: (e as Error).message })
     } finally {
@@ -266,8 +270,25 @@ function MetricsCard({ serverId }: { serverId: string }): JSX.Element {
             </span>
             <span className="text-xs text-slate-600">/ {data.cpuCount ?? '?'} çekirdek</span>
           </div>
+
+          <div className="grid grid-cols-3 gap-3 border-t border-ink-700 pt-3">
+            <HistChart label="RAM" values={history(serverId).map((x) => x.mem)} color="#818cf8" />
+            <HistChart label="Disk" values={history(serverId).map((x) => x.disk)} color="#fbbf24" />
+            <HistChart label="Yük" values={history(serverId).map((x) => x.cpu)} color="#34d399" />
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function HistChart({ label, values, color }: { label: string; values: number[]; color: string }): JSX.Element {
+  return (
+    <div>
+      <div className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">{label} geçmişi</div>
+      <div className="h-8 w-full">
+        <Sparkline values={values} width={200} height={32} color={color} threshold={0.9} />
+      </div>
     </div>
   )
 }

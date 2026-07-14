@@ -9,6 +9,7 @@ import GroupForm from './components/GroupForm'
 import CommandPalette from './components/CommandPalette'
 import UpdateBanner from './components/UpdateBanner'
 import NotesWidget from './components/NotesWidget'
+import { ratios, record, checkAlerts } from './lib/metricsHistory'
 
 export default function App(): JSX.Element {
   const { loading, locked, init, serverFormOpen, groupFormOpen, setPalette, openServerForm, closeActiveTab, vault, lock, miniMode } =
@@ -23,6 +24,35 @@ export default function App(): JSX.Element {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  // Background fleet monitoring — poll all servers for history + threshold alerts.
+  const backgroundMonitor = vault?.settings.backgroundMonitor ?? false
+  useEffect(() => {
+    if (locked || !backgroundMonitor) return
+    let stop = false
+    const poll = async (): Promise<void> => {
+      const st = useStore.getState()
+      for (const s of st.vault?.servers ?? []) {
+        if (stop) return
+        try {
+          const m = await window.janus.ssh.metrics(s.id)
+          if (m.reachable) {
+            const rt = ratios(m)
+            record(s.id, { t: Date.now(), ...rt })
+            checkAlerts(s.id, s.name, rt, st.notify)
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    poll()
+    const id = setInterval(poll, 60_000)
+    return () => {
+      stop = true
+      clearInterval(id)
+    }
+  }, [locked, backgroundMonitor])
 
   // Auto-lock after a period of inactivity (0 = never).
   const lockAfterMinutes = vault?.settings.lockAfterMinutes ?? 0

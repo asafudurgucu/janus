@@ -96,6 +96,7 @@ export interface AppSettings {
   copyOnSelect: boolean
   autoReconnect: boolean // reconnect dropped SSH sessions automatically
   notifications: boolean // desktop notifications
+  backgroundMonitor: boolean // poll all servers in the background for history + alerts
 }
 
 /** The full decrypted vault — this is what gets serialized into the single encrypted file. */
@@ -121,7 +122,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   lockAfterMinutes: 0,
   copyOnSelect: true,
   autoReconnect: true,
-  notifications: true
+  notifications: true,
+  backgroundMonitor: false
 }
 
 export function emptyVault(): Vault {
