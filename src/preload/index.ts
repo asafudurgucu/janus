@@ -115,6 +115,25 @@ const api = {
     start: (sessionId: string, serverId: string) => invoke<number>(IPC.vncStart, sessionId, serverId),
     stop: (sessionId: string) => ipcRenderer.send(IPC.vncStop, sessionId)
   },
+  rdp: {
+    launch: (serverId: string) => invoke<boolean>(IPC.rdpLaunch, serverId)
+  },
+  power: {
+    onResume: (cb: () => void) => {
+      const listener = (): void => cb()
+      ipcRenderer.on(IPC.systemResume, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC.systemResume, listener)
+      }
+    },
+    onSuspend: (cb: () => void) => {
+      const listener = (): void => cb()
+      ipcRenderer.on(IPC.systemSuspend, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC.systemSuspend, listener)
+      }
+    }
+  },
   updates: {
     check: () => invoke<boolean>(IPC.updateCheck),
     download: () => invoke<boolean>(IPC.updateDownload),

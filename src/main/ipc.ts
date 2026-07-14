@@ -1,9 +1,10 @@
-import { ipcMain, dialog, BrowserWindow, systemPreferences } from 'electron'
+import { ipcMain, dialog, BrowserWindow, systemPreferences, powerMonitor } from 'electron'
 import { IPC } from '@shared/ipc'
 import { vaultStore } from './store'
 import { SSHManager } from './ssh-manager'
 import { setupAutoUpdater, updater } from './updater'
 import { generateKey } from './keygen'
+import { launchRdp } from './rdp'
 import type { KeyType } from '@shared/types'
 import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
 
@@ -133,6 +134,16 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     return ssh.startVnc(sessionId as string, profile, jumpFor(profile))
   })
   ipcMain.on(IPC.vncStop, (_e, sessionId: string) => ssh.stopVnc(sessionId))
+
+  // ---- RDP (native client) ----
+  handle(IPC.rdpLaunch, async (serverId) => {
+    await launchRdp(findServer(serverId as string))
+    return true
+  })
+
+  // ---- Power events → renderer (reconnect after sleep) ----
+  powerMonitor.on('resume', () => emit(IPC.systemResume, {}))
+  powerMonitor.on('suspend', () => emit(IPC.systemSuspend, {}))
 
   // ---- System integration (Touch ID) ----
   handle(IPC.touchIdAvailable, async () => process.platform === 'darwin' && systemPreferences.canPromptTouchID())

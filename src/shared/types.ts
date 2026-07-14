@@ -27,6 +27,9 @@ export interface ServerProfile {
   /** Remote desktop (VNC) — port on the server (default 5900) and optional password. */
   vncPort?: number
   vncPassword?: string
+  /** RDP (Windows remote desktop) — opens the OS RDP client. */
+  rdpPort?: number
+  rdpUsername?: string
   createdAt: number
   updatedAt: number
   lastConnectedAt?: number

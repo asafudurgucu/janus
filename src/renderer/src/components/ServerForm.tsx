@@ -26,6 +26,8 @@ function blank(partial?: Partial<ServerProfile>): ServerProfile {
     keepaliveInterval: 30,
     vncPort: 5900,
     vncPassword: '',
+    rdpPort: 3389,
+    rdpUsername: '',
     createdAt: Date.now(),
     updatedAt: Date.now(),
     ...partial
@@ -281,6 +283,28 @@ export default function ServerForm(): JSX.Element {
           </div>
           <p className="mt-2 text-[11px] text-slate-600">
             Bağlantı SSH tüneli üzerinden sunucuda <span className="font-mono">127.0.0.1:{form.vncPort ?? 5900}</span>'a yapılır. VNC sunucusu çalışıyor olmalı.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-ink-600 bg-ink-900/40 p-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Windows Uzak Masaüstü (RDP)</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">RDP portu</label>
+              <input
+                type="number"
+                value={form.rdpPort ?? 3389}
+                onChange={(e) => set('rdpPort', Number(e.target.value) || 3389)}
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="label">RDP kullanıcı adı</label>
+              <input value={form.rdpUsername} onChange={(e) => set('rdpUsername', e.target.value)} className="field" placeholder="Administrator" />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-600">
+            "RDP ile bağlan" sistemin uzak masaüstü istemcisini açar (Mac'te Microsoft Remote Desktop). Görüntü gelir, parola istemcide sorulur.
           </p>
         </div>
 

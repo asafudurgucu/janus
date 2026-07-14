@@ -3,7 +3,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { SearchAddon } from '@xterm/addon-search'
-import { Search, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { Search, X, ChevronUp, ChevronDown, RotateCw } from 'lucide-react'
 import { useStore } from '../store'
 import type { Tab } from '../store'
 
@@ -40,6 +40,8 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
   const settings = vault?.settings
   const [showSearch, setShowSearch] = useState(false)
   const [query, setQuery] = useState('')
+  const [dead, setDead] = useState(false)
+  const [reconnectNonce, setReconnectNonce] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -103,10 +105,12 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
       setTabStatus(sessionId, p.status as Tab['status'])
       if (p.status === 'connected') {
         attempts = 0
+        setDead(false)
         dim(`╰─ \x1b[32m● bağlandı\x1b[38;5;245m (${Date.now() - t0} ms)\x1b[0m\r\n`)
       }
       if (p.status === 'error' && p.message) {
         term.writeln(`╰─ \x1b[31m✖ Bağlantı hatası: ${p.message}\x1b[0m`)
+        setDead(true)
       }
       if (p.status === 'disconnected' && !disposed) {
         if (autoReconnect && attempts < 5) {
@@ -115,12 +119,25 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
           term.writeln(`\r\n\x1b[33m⚠ Bağlantı koptu. ${delay / 1000}sn içinde yeniden bağlanılıyor… (deneme ${attempts}/5)\x1b[0m`)
           reconnectTimer = setTimeout(doConnect, delay)
         } else {
+          setDead(true)
           term.writeln(
             `\r\n\x1b[33m⚠ Bağlantı kapandı.\x1b[0m${autoReconnect ? ' \x1b[38;5;245m(yeniden deneme limitine ulaşıldı)\x1b[0m' : ''}`
           )
         }
       }
     })
+
+    // After the machine wakes from sleep the TCP socket is dead — refresh it.
+    const offResume = window.janus.power.onResume(() => {
+      if (disposed) return
+      attempts = 0
+      clearTimeout(reconnectTimer)
+      dim('\r\n↻ Uykudan dönüldü, yeniden bağlanılıyor…')
+      window.janus.ssh.disconnect(sessionId)
+      reconnectTimer = setTimeout(doConnect, 500)
+    })
+    // Don't burn reconnect attempts while suspended.
+    const offSuspend = window.janus.power.onSuspend(() => clearTimeout(reconnectTimer))
 
     doConnect()
 
@@ -142,11 +159,13 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
       keyDisposable.dispose()
       offData()
       offStatus()
+      offResume()
+      offSuspend()
       window.janus.ssh.disconnect(sessionId)
       term.dispose()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab.id])
+  }, [tab.id, reconnectNonce])
 
   useEffect(() => {
     const t = setTimeout(() => fitRef.current?.fit(), 30)
@@ -185,6 +204,19 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
           </button>
           <button onClick={() => { setShowSearch(false); termRef.current?.focus() }} className="rounded p-1 text-slate-400 hover:bg-ink-600">
             <X size={14} />
+          </button>
+        </div>
+      )}
+      {dead && (
+        <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2">
+          <button
+            onClick={() => {
+              setDead(false)
+              setReconnectNonce((n) => n + 1)
+            }}
+            className="btn-primary shadow-lg"
+          >
+            <RotateCw size={15} /> Yeniden bağlan
           </button>
         </div>
       )}

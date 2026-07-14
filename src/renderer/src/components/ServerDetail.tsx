@@ -18,7 +18,8 @@ import {
   AlertCircle,
   Box,
   ScrollText,
-  Monitor
+  Monitor,
+  MonitorPlay
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerMetrics } from '@shared/types'
@@ -94,7 +95,14 @@ export default function ServerDetail(): JSX.Element {
           <ScrollText size={16} /> Loglar
         </button>
         <button onClick={() => openVnc(server.id)} className="btn-ghost border border-ink-500">
-          <Monitor size={16} /> Masaüstü
+          <Monitor size={16} /> VNC
+        </button>
+        <button
+          onClick={() => window.janus.rdp.launch(server.id).catch((e) => alert((e as Error).message))}
+          className="btn-ghost border border-ink-500"
+          title="Windows uzak masaüstü"
+        >
+          <MonitorPlay size={16} /> RDP
         </button>
         <button onClick={() => openServerForm(server)} className="btn-ghost border border-ink-500">
           <Pencil size={16} /> Düzenle

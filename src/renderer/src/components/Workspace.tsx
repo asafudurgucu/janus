@@ -1,4 +1,5 @@
-import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, Monitor, X } from 'lucide-react'
+import { useState } from 'react'
+import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, Monitor, X, XCircle, ListX } from 'lucide-react'
 import { useStore } from '../store'
 import TerminalView from './Terminal'
 import SftpPanel from './SftpPanel'
@@ -29,7 +30,9 @@ function statusColor(status: Tab['status']): string {
 }
 
 export default function Workspace(): JSX.Element {
-  const { tabs, activeTabId, setActiveTab, closeTab, sidePanel, miniMode } = useStore()
+  const { tabs, activeTabId, setActiveTab, closeTab, closeOtherTabs, closeAllTabs, reorderTab, sidePanel, miniMode } =
+    useStore()
+  const [menu, setMenu] = useState<{ x: number; y: number; tabId: string } | null>(null)
 
   // Non-server panels take over the whole workspace (not in mini mode).
   if (!miniMode) {
@@ -51,8 +54,26 @@ export default function Workspace(): JSX.Element {
             return (
               <div
                 key={tab.id}
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('application/janus-tab', tab.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const from = e.dataTransfer.getData('application/janus-tab')
+                  if (from) reorderTab(from, tab.id)
+                }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`group flex max-w-[220px] cursor-pointer items-center gap-2 border-r border-ink-600 px-3 text-sm ${
+                onAuxClick={(e) => {
+                  if (e.button === 1) {
+                    e.preventDefault()
+                    closeTab(tab.id)
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setMenu({ x: Math.min(e.clientX, window.innerWidth - 190), y: e.clientY, tabId: tab.id })
+                }}
+                className={`group flex max-w-[220px] shrink-0 cursor-pointer items-center gap-2 border-r border-ink-600 px-3 text-sm ${
                   active ? 'bg-ink-900 text-white' : 'text-slate-400 hover:bg-ink-700'
                 }`}
               >
@@ -72,6 +93,24 @@ export default function Workspace(): JSX.Element {
             )
           })}
         </div>
+      )}
+
+      {menu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null) }} />
+          <div className="fixed z-50 w-48 rounded-lg border border-ink-500 bg-ink-700 py-1 text-xs shadow-2xl" style={{ left: menu.x, top: menu.y }}>
+            <button onClick={() => { closeTab(menu.tabId); setMenu(null) }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-slate-200 hover:bg-ink-500">
+              <X size={13} /> Kapat
+            </button>
+            <button onClick={() => { closeOtherTabs(menu.tabId); setMenu(null) }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-slate-200 hover:bg-ink-500">
+              <XCircle size={13} /> Diğerlerini kapat
+            </button>
+            <div className="my-1 border-t border-ink-500" />
+            <button onClick={() => { closeAllTabs(); setMenu(null) }} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-bad hover:bg-ink-500">
+              <ListX size={13} /> Tümünü kapat
+            </button>
+          </div>
+        </>
       )}
 
       {/* Content */}

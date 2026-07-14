@@ -20,7 +20,8 @@ import {
   Radio,
   Box,
   ScrollText,
-  Monitor
+  Monitor,
+  MonitorPlay
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ServerProfile, Group } from '@shared/types'
@@ -361,6 +362,7 @@ function ServerRow({ server, depth }: { server: ServerProfile; depth: number }):
             <MenuItem icon={Box} label="Servisler / Docker" onClick={() => { openDocker(server.id); closeMenu() }} />
             <MenuItem icon={ScrollText} label="Loglar (canlı)" onClick={() => { openLogs(server.id); closeMenu() }} />
             <MenuItem icon={Monitor} label="Uzak masaüstü (VNC)" onClick={() => { openVnc(server.id); closeMenu() }} />
+            <MenuItem icon={MonitorPlay} label="RDP ile bağlan (Windows)" onClick={() => { window.janus.rdp.launch(server.id).catch((e) => alert((e as Error).message)); closeMenu() }} />
             <MenuItem icon={Pencil} label="Düzenle" onClick={() => { openServerForm(server); closeMenu() }} />
             <MenuItem icon={Copy} label="Çoğalt" onClick={() => { duplicateServer(server.id); closeMenu() }} />
             <div className="my-1 border-t border-ink-500" />

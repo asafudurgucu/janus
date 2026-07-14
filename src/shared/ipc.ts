@@ -39,6 +39,13 @@ export const IPC = {
   vncStart: 'vnc:start',
   vncStop: 'vnc:stop',
 
+  // RDP — launch the OS remote desktop client
+  rdpLaunch: 'rdp:launch',
+
+  // System power events (main → renderer)
+  systemResume: 'system:resume',
+  systemSuspend: 'system:suspend',
+
   // SSH session events (main -> renderer, prefixed with session id)
   sshOnData: 'ssh:on-data',
   sshOnStatus: 'ssh:on-status',

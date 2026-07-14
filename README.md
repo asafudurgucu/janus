@@ -42,6 +42,7 @@ masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** s
 
 - **🖥️ Entegre SSH terminal** — çoklu sekme, arama, otomatik yeniden bağlanma, jump host.
 - **🖱️ VNC uzak masaüstü** — sunucunun ekranına SSH tüneli üzerinden şifreli bağlan, fare/klavye kontrolü.
+- **🪟 RDP (Windows uzak masaüstü)** — sistemin RDP istemcisini tek tıkla sunucuya bağlı açar (Mac/Win/Linux).
 - **📊 Filo paneli** — tüm sunucuların CPU/RAM/disk/uptime durumu canlı, tek ekranda.
 - **📡 Broadcast** — bir komutu onlarca sunucuda aynı anda çalıştır, çıktıları yan yana gör.
 - **🐳 Docker & systemd** — konteyner/servis başlat-durdur-restart, süreç yönetimi, canlı log akışı.

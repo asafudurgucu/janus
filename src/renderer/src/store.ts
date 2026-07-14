@@ -125,6 +125,9 @@ interface Actions {
   openVnc: (serverId: string) => void
   closeTab: (tabId: string) => void
   closeActiveTab: () => void
+  closeOtherTabs: (tabId: string) => void
+  closeAllTabs: () => void
+  reorderTab: (fromId: string, toId: string) => void
   setActiveTab: (tabId: string) => void
   setTabStatus: (tabId: string, status: SessionStatus) => void
 
@@ -414,6 +417,24 @@ export const useStore = create<UIState & Actions>((set, get) => ({
   closeActiveTab() {
     const id = get().activeTabId
     if (id) get().closeTab(id)
+  },
+
+  closeOtherTabs(tabId) {
+    set({ tabs: get().tabs.filter((t) => t.id === tabId), activeTabId: tabId })
+  },
+
+  closeAllTabs() {
+    set({ tabs: [], activeTabId: null })
+  },
+
+  reorderTab(fromId, toId) {
+    const tabs = [...get().tabs]
+    const from = tabs.findIndex((t) => t.id === fromId)
+    const to = tabs.findIndex((t) => t.id === toId)
+    if (from < 0 || to < 0 || from === to) return
+    const [moved] = tabs.splice(from, 1)
+    tabs.splice(to, 0, moved)
+    set({ tabs })
   },
 
   setActiveTab: (tabId) => set({ activeTabId: tabId }),
