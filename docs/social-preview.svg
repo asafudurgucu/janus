@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <radialGradient id="g" cx="0.5" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#1a1e3a"/>
+      <stop offset="0.6" stop-color="#0a0b0d"/>
+      <stop offset="1" stop-color="#06070a"/>
+    </radialGradient>
+    <linearGradient id="jw" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c7ccff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#g)"/>
+  <rect x="0.5" y="0.5" width="1279" height="639" fill="none" stroke="#232842" stroke-width="1"/>
+
+  <!-- dotted texture -->
+  <g fill="#ffffff" opacity="0.03">
+    <circle cx="80" cy="80" r="1.5"/><circle cx="160" cy="80" r="1.5"/><circle cx="240" cy="80" r="1.5"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="640" y="250" text-anchor="middle" font-size="150" font-weight="800" letter-spacing="-4" fill="url(#jw)">Janus</text>
+  <text x="640" y="300" text-anchor="middle" font-size="17" letter-spacing="8" fill="#818cf8">SSH &amp; SERVER COMMAND CENTER</text>
+
+  <!-- tagline -->
+  <text x="640" y="368" text-anchor="middle" font-size="30" font-weight="600" fill="#e9ecf3">The open-source command center for your servers.</text>
+  <text x="640" y="410" text-anchor="middle" font-size="19" fill="#9098a6">SSH · SFTP · VNC/RDP · Tunnels · Fleet monitoring · Databases — one encrypted app.</text>
+
+  <!-- badges -->
+  <g transform="translate(0,470)" font-size="15" font-weight="600">
+    <g transform="translate(410,0)"><rect x="0" y="0" width="130" height="38" rx="19" fill="#12151c" stroke="#272b31"/><text x="65" y="25" text-anchor="middle" fill="#cbd5e1">macOS · Win · Linux</text></g>
+    <g transform="translate(556,0)"><rect x="0" y="0" width="118" height="38" rx="19" fill="#12151c" stroke="#272b31"/><text x="59" y="25" text-anchor="middle" fill="#34d399">Open source</text></g>
+    <g transform="translate(690,0)"><rect x="0" y="0" width="70" height="38" rx="19" fill="#12151c" stroke="#272b31"/><text x="35" y="25" text-anchor="middle" fill="#fbbf24">MIT</text></g>
+    <g transform="translate(776,0)"><rect x="0" y="0" width="94" height="38" rx="19" fill="#6366f1"/><text x="47" y="25" text-anchor="middle" fill="#fff">Free ⭐</text></g>
+  </g>
+
+  <text x="640" y="588" text-anchor="middle" font-size="15" fill="#5b626f">github.com/asafudurgucu/janus  ·  The Asaf Effect</text>
+</svg>
