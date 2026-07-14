@@ -8,7 +8,8 @@ app.disableHardwareAcceleration()
 
 const shots = [
   ['dashboard', 1280, 800],
-  ['terminal', 1280, 800]
+  ['terminal', 1280, 800],
+  ['database', 1280, 800]
 ]
 
 app.whenReady().then(async () => {

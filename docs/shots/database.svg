@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <filter id="sh3" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="30" stdDeviation="40" flood-color="#000" flood-opacity="0.55"/></filter>
+    <clipPath id="w3"><rect x="20" y="20" width="1240" height="760" rx="14"/></clipPath>
+  </defs>
+  <rect width="1280" height="800" fill="#06070a"/>
+  <g filter="url(#sh3)"><rect x="20" y="20" width="1240" height="760" rx="14" fill="#0f1113" stroke="#1d2024"/></g>
+  <g clip-path="url(#w3)">
+    <rect x="20" y="20" width="1240" height="40" fill="#0f1113"/>
+    <circle cx="44" cy="40" r="6" fill="#fb5d6b"/><circle cx="64" cy="40" r="6" fill="#fbbf24"/><circle cx="84" cy="40" r="6" fill="#34d399"/>
+    <text x="120" y="45" fill="#e4e7ec" font-size="14" font-weight="700">Janus</text>
+    <text x="172" y="45" fill="#5b626f" font-size="12">SSH Manager  |  The Asaf Effect</text>
+    <line x1="20" y1="60" x2="1260" y2="60" stroke="#1d2024"/>
+
+    <!-- rail -->
+    <rect x="20" y="60" width="56" height="720" fill="#0f1113"/>
+    <rect x="32" y="200" width="32" height="32" rx="8" fill="#6366f1" fill-opacity="0.18"/>
+    <g fill="none" stroke="#818cf8" stroke-width="2"><ellipse cx="48" cy="211" rx="9" ry="3"/><path d="M39 211v10a9 3 0 0 0 18 0v-10"/></g>
+    <g fill="#3a4048"><rect x="32" y="74" width="32" height="32" rx="8"/><rect x="32" y="116" width="32" height="32" rx="8"/><rect x="32" y="158" width="32" height="32" rx="8"/></g>
+    <line x1="76" y1="60" x2="76" y2="780" stroke="#1d2024"/>
+
+    <!-- tab bar -->
+    <rect x="76" y="60" width="1184" height="40" fill="#0f1113"/>
+    <rect x="76" y="60" width="180" height="40" fill="#0a0b0d"/>
+    <circle cx="96" cy="80" r="3" fill="#34d399"/><text x="108" y="84" fill="#fff" font-size="12">prod-db</text>
+    <line x1="76" y1="100" x2="1260" y2="100" stroke="#1d2024"/>
+
+    <!-- tables list -->
+    <rect x="76" y="100" width="224" height="680" fill="#0a0b0d"/>
+    <text x="92" y="128" fill="#5b626f" font-size="11" font-weight="600">TABLOLAR</text>
+    <g font-size="13" fill="#cbd5e1">
+      <text x="108" y="156">users</text><text x="108" y="184">orders</text>
+      <rect x="88" y="196" width="200" height="24" rx="5" fill="#6366f1" fill-opacity="0.15"/>
+      <text x="108" y="213" fill="#fff">products</text>
+      <text x="108" y="240">payments</text><text x="108" y="268">sessions</text><text x="108" y="296">audit_log</text>
+    </g>
+
+    <!-- editor -->
+    <rect x="300" y="100" width="960" height="130" fill="#0a0b0d"/>
+    <rect x="320" y="120" width="920" height="70" rx="8" fill="#0f1113" stroke="#272b31"/>
+    <g font-family="'JetBrains Mono', monospace" font-size="13">
+      <text x="336" y="146"><tspan fill="#818cf8">select</tspan><tspan fill="#cbd5e1"> id, name, price, stock </tspan><tspan fill="#818cf8">from</tspan><tspan fill="#cbd5e1"> products</tspan></text>
+      <text x="336" y="168" fill="#cbd5e1"><tspan fill="#818cf8">where</tspan> stock &lt; 20 <tspan fill="#818cf8">order by</tspan> price <tspan fill="#818cf8">desc</tspan> <tspan fill="#818cf8">limit</tspan> 100;</text>
+    </g>
+    <rect x="320" y="200" width="120" height="30" rx="8" fill="#6366f1"/><text x="352" y="220" fill="#fff" font-size="12">▶ Çalıştır</text>
+    <text x="1130" y="220" fill="#5b626f" font-size="12" text-anchor="end">42 satır · 18 ms</text>
+
+    <!-- results grid -->
+    <rect x="300" y="230" width="960" height="550" fill="#0a0b0d"/>
+    <rect x="300" y="230" width="960" height="30" fill="#0f1113"/>
+    <g font-size="11" fill="#8b93a1" font-weight="600">
+      <text x="330" y="250">#</text><text x="380" y="250">ID</text><text x="470" y="250">NAME</text><text x="900" y="250">PRICE</text><text x="1050" y="250">STOCK</text>
+    </g>
+    <g font-family="'JetBrains Mono', monospace" font-size="12" fill="#cbd5e1">
+      <!-- rows -->
+      <g><text x="330" y="284" fill="#646b78">1</text><text x="380" y="284">1042</text><text x="470" y="284">Mechanical Keyboard</text><text x="900" y="284">$129.00</text><text x="1050" y="284" fill="#fb5d6b">3</text></g>
+      <line x1="300" y1="298" x2="1260" y2="298" stroke="#1a1d23"/>
+      <g><text x="330" y="322" fill="#646b78">2</text><text x="380" y="322">2231</text><text x="470" y="322">USB-C Hub 8-in-1</text><text x="900" y="322">$59.90</text><text x="1050" y="322" fill="#fbbf24">11</text></g>
+      <line x1="300" y1="336" x2="1260" y2="336" stroke="#1a1d23"/>
+      <g><text x="330" y="360" fill="#646b78">3</text><text x="380" y="360">1890</text><text x="470" y="360">4K Monitor 27"</text><text x="900" y="360">$329.00</text><text x="1050" y="360" fill="#fbbf24">7</text></g>
+      <line x1="300" y1="374" x2="1260" y2="374" stroke="#1a1d23"/>
+      <g><text x="330" y="398" fill="#646b78">4</text><text x="380" y="398">3020</text><text x="470" y="398">Noise-Cancelling Headset</text><text x="900" y="398">$199.00</text><text x="1050" y="398" fill="#34d399">18</text></g>
+      <line x1="300" y1="412" x2="1260" y2="412" stroke="#1a1d23"/>
+      <g><text x="330" y="436" fill="#646b78">5</text><text x="380" y="436">1177</text><text x="470" y="436">Webcam 1080p</text><text x="900" y="436">$45.00</text><text x="1050" y="436" fill="#fb5d6b">2</text></g>
+      <line x1="300" y1="450" x2="1260" y2="450" stroke="#1a1d23"/>
+      <g opacity="0.6"><text x="330" y="474" fill="#646b78">6</text><text x="380" y="474">2765</text><text x="470" y="474">Laptop Stand</text><text x="900" y="474">$39.00</text><text x="1050" y="474" fill="#fbbf24">14</text></g>
+    </g>
+  </g>
+</svg>

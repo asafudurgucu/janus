@@ -5,92 +5,119 @@
 <h1 align="center">Janus</h1>
 
 <p align="center">
-  <b>Profesyonel SSH &amp; sunucu yöneticisi.</b><br/>
-  Şifreli tek dosya, çok protokollü sunucu komuta merkezi.
+  <b>The open-source command center for your servers.</b><br/>
+  One encrypted file. SSH, SFTP, remote desktop, tunnels, live monitoring and databases — all in one place.
 </p>
 
 <p align="center">
-  <a href="https://github.com/asafudurgucu/janus/releases/latest"><img src="https://img.shields.io/github/v/release/asafudurgucu/janus?style=flat-square&color=6366f1&label=s%C3%BCr%C3%BCm" alt="release" /></a>
-  <a href="https://github.com/asafudurgucu/janus/releases"><img src="https://img.shields.io/github/downloads/asafudurgucu/janus/total?style=flat-square&color=34d399&label=indirme" alt="downloads" /></a>
+  <a href="https://github.com/asafudurgucu/janus/releases/latest"><img src="https://img.shields.io/github/v/release/asafudurgucu/janus?style=flat-square&color=6366f1&label=release" alt="release" /></a>
+  <a href="https://github.com/asafudurgucu/janus/releases"><img src="https://img.shields.io/github/downloads/asafudurgucu/janus/total?style=flat-square&color=34d399&label=downloads" alt="downloads" /></a>
+  <a href="https://github.com/asafudurgucu/janus/stargazers"><img src="https://img.shields.io/github/stars/asafudurgucu/janus?style=flat-square&color=fbbf24" alt="stars" /></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-8b93a1?style=flat-square" alt="platforms" />
-  <img src="https://img.shields.io/badge/vault-AES--256--GCM-fb5d6b?style=flat-square" alt="security" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-fb5d6b?style=flat-square" alt="license" /></a>
 </p>
 
 <p align="center">
-  <a href="https://asafudurgucu.github.io/janus/"><b>🌐 İndirme &amp; tanıtım sayfası</b></a> &nbsp;·&nbsp;
-  <a href="https://github.com/asafudurgucu/janus/releases/latest"><b>⬇️ En güncel sürüm</b></a>
+  <b>English</b> · <a href="README.tr.md">Türkçe</a> &nbsp;|&nbsp;
+  <a href="https://asafudurgucu.github.io/janus/">🌐 Website</a> ·
+  <a href="https://github.com/asafudurgucu/janus/releases/latest">⬇️ Download</a>
 </p>
 
 <br/>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/dashboard.png" alt="Janus — Filo Paneli" width="900" />
+  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/dashboard.png" alt="Janus — Fleet Dashboard" width="900" />
 </p>
+
+<p align="center"><i>If Janus is useful to you, please ⭐ <b>star the repo</b> — it genuinely helps it reach more people.</i></p>
 
 ---
 
-## Janus nedir?
+## What is Janus?
 
-Janus, sunucularını tek bir yerden yönetmen için tasarlanmış profesyonel bir masaüstü uygulamasıdır.
-Postman'in koleksiyonları tek dosyada toplaması gibi, Janus da tüm sunucularını, anahtarlarını ve
-bağlantılarını **tek bir şifreli dosyada** toplar — ama bununla kalmaz: entegre terminalden uzak
-masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** sunar.
+Janus is a professional, cross-platform desktop app that manages **all your servers from one place**.
+Like Postman keeps your collections in a single file, Janus keeps every server, key and password in
+**one AES-256 encrypted vault** — then goes much further: an integrated terminal, remote desktop,
+fleet monitoring, multi-server commands and a built-in database client turn it into a real
+**infrastructure command center**.
 
-> macOS · Windows · Linux — üçü de tek tıkla indirilebilir.
+Think Termius — but open source, single-file, and without the paywall.
 
-## ✨ Öne çıkanlar
+## ✨ Features
 
-- **🖥️ Entegre SSH terminal** — çoklu sekme, **bölünmüş panel** (4'e kadar), arama, otomatik yeniden bağlanma, jump host.
-- **🖱️ VNC uzak masaüstü** — sunucunun ekranına SSH tüneli üzerinden şifreli bağlan, fare/klavye kontrolü.
-- **🪟 RDP (Windows uzak masaüstü)** — sistemin RDP istemcisini tek tıkla sunucuya bağlı açar (Mac/Win/Linux).
-- **🗄️ Veritabanı yöneticisi** — PostgreSQL / MySQL / Redis'e SSH tüneli üzerinden bağlan, sorgu çalıştır, tablo gez.
-- **📊 Filo paneli** — tüm sunucuların CPU/RAM/disk durumu canlı, **geçmiş grafikleriyle**; %90 eşiği aşılınca uyarı (arka planda izleme dahil).
-- **📡 Broadcast** — bir komutu onlarca sunucuda aynı anda çalıştır, çıktıları yan yana gör.
-- **🐳 Docker & systemd** — konteyner/servis başlat-durdur-restart, süreç yönetimi, canlı log akışı.
-- **📁 SFTP & port tünelleri** — dosya transferi, **uzak dosya düzenleme**, yol kopyalama + local/remote/dynamic forwarding.
-- **🔁 `~/.ssh/config` içe/dışa aktar** — mevcut sunucularını tek tıkla getir/gönder.
-- **🔔 Masaüstü bildirimleri** — komut bitince / sunucu düşünce haber ver.
-- **🔑 SSH anahtar yöneticisi** — uygulama içinde anahtar üret, sunucuya tek tıkla kur.
-- **📝 Yüzen not defteri** — şifreler/notlar için proje geneli, sürüklenip boyutlandırılabilen, şifreli kayıtlı pano.
-- **🪟 Mini panel modu** — pencereyi küçült, üstte sabitle; web/editör yanına koyabileceğin kompakt terminal.
-- **🗂️ Gruplama & etiketleme** — sürükle-bırak ile düzenle, anında ara.
-- **🎨 9 tema** (Midnight, Slate, Coffee, Claude, Sand…) · **⌘K komut paleti** · **👆 Touch ID kilidi** · **🔄 otomatik güncelleme**.
+- **🖥️ SSH terminal** — multiple tabs, **split panes** (up to 4), search, auto-reconnect, jump hosts.
+- **🖱️ Remote desktop** — in-app **VNC** over an SSH tunnel, plus one-click **RDP** for Windows servers.
+- **🗄️ Database client** — PostgreSQL / MySQL / Redis over SSH tunnels; query editor, results grid, table browser.
+- **📊 Fleet dashboard** — live CPU/RAM/disk for every server, **history graphs** and **90% threshold alerts**.
+- **📡 Broadcast** — run one command across many servers at once, outputs side by side.
+- **🐳 Docker & systemd** — start/stop/restart containers and services, manage processes, tail logs live.
+- **📁 SFTP & tunnels** — file transfer, **remote file editing**, path copy + local/remote/dynamic port forwarding.
+- **🔑 SSH key manager** — generate keys and install them on a server in one click. Import/export `~/.ssh/config`.
+- **🔐 Security first** — single encrypted vault, Touch ID unlock, idle auto-lock. The master password never leaves your device.
+- **🎨 Polish** — 9 themes, command palette (⌘K), floating encrypted notes, mini panel mode, desktop notifications, auto-update.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/terminal.png" alt="Janus — Terminal" width="900" />
+  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/database.png" alt="Janus — Database client" width="860" />
+  <br/><br/>
+  <img src="https://raw.githubusercontent.com/asafudurgucu/janus/main/docs/shots/terminal.png" alt="Janus — Terminal" width="860" />
 </p>
 
-## ⬇️ İndir
+## 🆚 How it compares
 
-En güncel sürümü doğrudan indir:
+| | **Janus** | Termius | PuTTY |
+| --- | :---: | :---: | :---: |
+| SSH terminal | ✅ | ✅ | ✅ |
+| SFTP + remote file editing | ✅ | 💰 | ❌ |
+| VNC / RDP remote desktop | ✅ | ❌ | ❌ |
+| Fleet dashboard + alerts | ✅ | ❌ | ❌ |
+| Multi-server broadcast | ✅ | 💰 | ❌ |
+| Database client (PG/MySQL/Redis) | ✅ | ❌ | ❌ |
+| Port tunnels | ✅ | ✅ | ✅ |
+| Encrypted single-file vault | ✅ | ☁️ cloud | ❌ |
+| Price | **Free & open source** | Freemium | Free |
+
+## ⬇️ Download
+
+Grab the latest build for your platform:
 
 | Platform | |
 | --- | --- |
-| 🍎 **macOS** | [Apple Silicon (.dmg)](https://github.com/asafudurgucu/janus/releases/latest) · [Intel (.dmg)](https://github.com/asafudurgucu/janus/releases/latest) |
+| 🍎 **macOS** | [Apple Silicon](https://github.com/asafudurgucu/janus/releases/latest) · [Intel](https://github.com/asafudurgucu/janus/releases/latest) |
 | 🪟 **Windows** | [Installer (.exe)](https://github.com/asafudurgucu/janus/releases/latest) |
 | 🐧 **Linux** | [AppImage](https://github.com/asafudurgucu/janus/releases/latest) · [.deb](https://github.com/asafudurgucu/janus/releases/latest) |
 
-Ya da hepsini tek yerden gör: **[asafudurgucu.github.io/janus](https://asafudurgucu.github.io/janus/)**
+Or see everything at **[asafudurgucu.github.io/janus](https://asafudurgucu.github.io/janus/)**.
 
-> İlk açılışta bir **master parola** belirlersin — tüm vault'unu bu şifreler. Uygulamalar şu an
-> imzasız dağıtılmaktadır; ilk açılışta macOS'te *sağ tık → Aç*, Windows'ta *Daha fazla bilgi → Yine de çalıştır*.
+> On first launch you set a **master password** that encrypts your vault. Builds are currently
+> unsigned — on macOS *right-click → Open*, on Windows *More info → Run anyway*.
 
-## 🔐 Güvenlik
+## 🔐 Security
 
-Tüm verilerin tek bir **AES-256-GCM** ile şifreli dosyada saklanır ve master parolan
-**cihazından asla çıkmaz**. VNC ve diğer bağlantılar SSH tüneli üzerinden geçer, böylece
-servisleri internete açmana gerek kalmaz. İstersen Touch ID ile aç, boşta otomatik kilitle,
-vault'unu şifreli tek dosya olarak yedekle/taşı.
+Everything lives in a single **AES-256-GCM** encrypted file, and the master password
+**never leaves your device**. The renderer has no Node.js access (`contextIsolation`), and remote
+desktop / database connections are tunneled over SSH — no need to expose services to the internet.
+See [SECURITY.md](SECURITY.md).
 
-## 🔄 Güncellemeler
+## 🛠️ Development
 
-Janus kendini otomatik günceller — yeni bir sürüm çıktığında uygulama içinde bildirim alırsın.
-(macOS'te tam otomatik kurulum için kod imzası gerekir; Windows ve Linux'ta imzasız da çalışır.)
+```bash
+npm install
+npm run dev     # start with hot reload
+npm run build   # production build
+```
+
+Built with Electron + React + TypeScript. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## ⭐ Support
+
+Janus is free and open source. If it saves you time, **star the repo** and share it — that's the
+biggest way to help. Ideas and bug reports are welcome in [issues](https://github.com/asafudurgucu/janus/issues).
 
 ---
 
 <p align="center">
   a product of <b>The Asaf Effect</b> · 2026<br/>
   <a href="https://www.linkedin.com/in/asaf-üdürgücü-a55a4a1b8/">LinkedIn</a> ·
-  <a href="https://github.com/asafudurgucu/janus">GitHub</a>
+  <a href="https://github.com/asafudurgucu/janus">GitHub</a> ·
+  <a href="LICENSE">MIT</a>
 </p>
