@@ -49,6 +49,9 @@ export const IPC = {
   // Desktop notifications
   notifyShow: 'notify:show',
 
+  // AI copilot
+  aiChat: 'ai:chat',
+
   // Database manager
   dbTest: 'db:test',
   dbQuery: 'db:query',

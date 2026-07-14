@@ -17,10 +17,11 @@ import {
   FileUp,
   FileDown,
   Bell,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react'
 import { useStore } from '../store'
-import type { ThemeId } from '@shared/types'
+import type { ThemeId, AiProvider } from '@shared/types'
 
 export default function SettingsPanel(): JSX.Element {
   const { vault, updateSettings } = useStore()
@@ -39,6 +40,9 @@ export default function SettingsPanel(): JSX.Element {
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Theme */}
           <ThemeSection current={s.theme} onPick={(t) => updateSettings({ theme: t })} />
+
+          {/* AI Copilot */}
+          <AiSection />
 
           {/* Session & security */}
           <SessionSection />
@@ -251,6 +255,79 @@ function VaultSection(): JSX.Element {
           {msg.type === 'ok' ? <Check size={14} /> : <AlertCircle size={14} />} {msg.text}
         </div>
       )}
+    </Section>
+  )
+}
+
+const AI_DEFAULT_MODEL: Record<AiProvider, string> = {
+  anthropic: 'claude-3-5-sonnet-latest',
+  openai: 'gpt-4o-mini',
+  google: 'gemini-1.5-flash',
+  openrouter: 'anthropic/claude-3.5-sonnet',
+  custom: 'llama3'
+}
+const AI_KEY_HINT: Record<AiProvider, string> = {
+  anthropic: 'console.anthropic.com → API keys',
+  openai: 'platform.openai.com → API keys',
+  google: 'aistudio.google.com → API key',
+  openrouter: 'openrouter.ai/keys — tek anahtarla Claude, GPT, Gemini, Llama…',
+  custom: 'Ollama/LM Studio için anahtar gerekmez'
+}
+
+function AiSection(): JSX.Element {
+  const { vault, updateSettings } = useStore()
+  const ai = vault!.settings.ai
+
+  return (
+    <Section icon={Sparkles} title="AI Copilot">
+      <p className="text-xs text-slate-500">
+        Kendi API anahtarınla çalışır — anahtar şifreli vault'ta saklanır, istekler doğrudan sağlayıcıya gider.
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Sağlayıcı</label>
+          <select
+            value={ai.provider}
+            onChange={(e) => {
+              const provider = e.target.value as AiProvider
+              updateSettings({ ai: { ...ai, provider, model: AI_DEFAULT_MODEL[provider] } })
+            }}
+            className="field"
+          >
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI (GPT)</option>
+            <option value="google">Google (Gemini)</option>
+            <option value="openrouter">OpenRouter (çoğu model)</option>
+            <option value="custom">Özel / Ollama (OpenAI uyumlu)</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Model</label>
+          <input value={ai.model} onChange={(e) => updateSettings({ ai: { ...ai, model: e.target.value } })} className="field" />
+        </div>
+      </div>
+      {ai.provider === 'custom' && (
+        <div>
+          <label className="label">Base URL</label>
+          <input
+            value={ai.baseUrl ?? ''}
+            onChange={(e) => updateSettings({ ai: { ...ai, baseUrl: e.target.value } })}
+            className="field"
+            placeholder="http://localhost:11434/v1"
+          />
+        </div>
+      )}
+      <div>
+        <label className="label">API anahtarı {ai.provider === 'custom' && <span className="text-slate-600">(opsiyonel)</span>}</label>
+        <input
+          type="password"
+          value={ai.apiKey}
+          onChange={(e) => updateSettings({ ai: { ...ai, apiKey: e.target.value } })}
+          className="field"
+          placeholder={ai.provider === 'anthropic' ? 'sk-ant-…' : ai.provider === 'google' ? 'AIza…' : 'sk-…'}
+        />
+      </div>
+      <p className="text-[11px] text-slate-600">Anahtar: {AI_KEY_HINT[ai.provider]}</p>
     </Section>
   )
 }

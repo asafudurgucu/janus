@@ -74,6 +74,27 @@ export interface TunnelRule {
   autoStart?: boolean
 }
 
+export type AiProvider = 'anthropic' | 'openai' | 'google' | 'openrouter' | 'custom'
+
+export interface AiConfig {
+  provider: AiProvider
+  apiKey: string
+  model: string
+  baseUrl?: string // for 'custom' (OpenAI-compatible, e.g. Ollama/LM Studio)
+}
+
+export interface AiMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface AiReply {
+  text: string
+  truncated: boolean // hit max output tokens → can be continued
+  rateLimit?: string // provider rate-limit remaining, if reported
+  usage?: { input?: number; output?: number }
+}
+
 export type ThemeId =
   | 'midnight'
   | 'slate'
@@ -97,6 +118,7 @@ export interface AppSettings {
   autoReconnect: boolean // reconnect dropped SSH sessions automatically
   notifications: boolean // desktop notifications
   backgroundMonitor: boolean // poll all servers in the background for history + alerts
+  ai: AiConfig
 }
 
 /** The full decrypted vault — this is what gets serialized into the single encrypted file. */
@@ -123,7 +145,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   copyOnSelect: true,
   autoReconnect: true,
   notifications: true,
-  backgroundMonitor: false
+  backgroundMonitor: false,
+  ai: { provider: 'anthropic', apiKey: '', model: 'claude-3-5-sonnet-latest' }
 }
 
 export function emptyVault(): Vault {

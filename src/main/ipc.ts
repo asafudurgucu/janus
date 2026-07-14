@@ -7,7 +7,8 @@ import { generateKey } from './keygen'
 import { launchRdp } from './rdp'
 import { importSshConfig, exportSshConfig } from './sshconfig'
 import { DbManager } from './db-manager'
-import type { KeyType, DbConnection } from '@shared/types'
+import { aiChat } from './ai'
+import type { KeyType, DbConnection, AiMessage } from '@shared/types'
 import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
 
 /** Wrap a handler so it always returns a tidy IpcResult and never throws across IPC. */
@@ -160,6 +161,11 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     await dbm.close(id as string)
     return true
   })
+
+  // ---- AI copilot ----
+  handle(IPC.aiChat, async (messages, system) =>
+    aiChat(vaultStore.read().settings.ai, messages as AiMessage[], system as string)
+  )
 
   // ---- Desktop notifications ----
   ipcMain.on(IPC.notifyShow, (_e, title: string, body: string) => {

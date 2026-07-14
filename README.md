@@ -41,10 +41,13 @@ Like Postman keeps your collections in a single file, Janus keeps every server, 
 fleet monitoring, multi-server commands and a built-in database client turn it into a real
 **infrastructure command center**.
 
-Think Termius — but open source, single-file, and without the paywall.
+**Local-first & AI-native:** no server to self-host, no cloud to trust — just a single encrypted file
+on your machine, plus an **AI copilot** (with your own API key) that understands your servers. Think
+Termius, but open source, private, and smarter.
 
 ## ✨ Features
 
+- **🤖 AI Copilot** — bring your own key (Claude, OpenAI, Gemini, OpenRouter or local Ollama). Explain errors, generate commands, turn natural language into SQL — with your server as context. File attachments, continue, and a context/limit indicator built in.
 - **🖥️ SSH terminal** — multiple tabs, **split panes** (up to 4), search, auto-reconnect, jump hosts.
 - **🖱️ Remote desktop** — in-app **VNC** over an SSH tunnel, plus one-click **RDP** for Windows servers.
 - **🗄️ Database client** — PostgreSQL / MySQL / Redis over SSH tunnels; query editor, results grid, table browser.
@@ -66,6 +69,8 @@ Think Termius — but open source, single-file, and without the paywall.
 
 | | **Janus** | Termius | PuTTY |
 | --- | :---: | :---: | :---: |
+| AI copilot (bring your own key) | ✅ | ❌ | ❌ |
+| Local-first, no server/cloud required | ✅ | ☁️ cloud | ✅ |
 | SSH terminal | ✅ | ✅ | ✅ |
 | SFTP + remote file editing | ✅ | 💰 | ❌ |
 | VNC / RDP remote desktop | ✅ | ❌ | ❌ |

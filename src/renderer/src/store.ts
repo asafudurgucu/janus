@@ -53,7 +53,7 @@ interface UIState {
   selectedServerId: string | null
   search: string
   activeTagFilter: string | null
-  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'databases' | 'snippets' | 'tunnels' | 'settings'
+  sidePanel: 'servers' | 'dashboard' | 'broadcast' | 'databases' | 'copilot' | 'snippets' | 'tunnels' | 'settings'
 
   // modals
   editingServer: ServerProfile | null

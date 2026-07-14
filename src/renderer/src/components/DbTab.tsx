@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Database, Play, RefreshCw, Table2, Loader2, AlertCircle, KeyRound } from 'lucide-react'
+import { Database, Play, RefreshCw, Table2, Loader2, AlertCircle, KeyRound, Sparkles } from 'lucide-react'
 import { useStore } from '../store'
 import type { Tab } from '../store'
 import type { DbConnection, DbQueryResult } from '@shared/types'
@@ -13,6 +13,29 @@ export default function DbTab({ tab }: { tab: Tab }): JSX.Element {
   const [running, setRunning] = useState(false)
   const [tables, setTables] = useState<string[]>([])
   const [loadingTables, setLoadingTables] = useState(true)
+  const [aiQ, setAiQ] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const aiCfg = vault?.settings.ai
+  const aiOn = !!aiCfg && (aiCfg.provider === 'custom' || !!aiCfg.apiKey)
+
+  async function askAi(): Promise<void> {
+    if (!conn || !aiQ.trim()) return
+    setAiBusy(true)
+    setError(null)
+    try {
+      const system =
+        conn.type === 'redis'
+          ? 'Kullanıcının doğal dil isteğini TEK bir Redis komutuna çevir. SADECE komutu döndür; açıklama, markdown veya backtick yok.'
+          : `Kullanıcının doğal dil isteğini TEK bir ${conn.type} sorgusuna çevir. SADECE sorguyu döndür; açıklama, markdown veya backtick yok. Mevcut tablolar: ${tables.join(', ') || '(bilinmiyor)'}.`
+      const reply = await window.janus.ai.chat([{ role: 'user', content: aiQ }], system)
+      const out = reply.text.trim().replace(/^```\w*\n?/, '').replace(/\n?```$/, '').trim()
+      setSql(out)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   const loadTables = useCallback(async () => {
     if (!conn) return
@@ -103,6 +126,21 @@ export default function DbTab({ tab }: { tab: Tab }): JSX.Element {
           <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">
             <Database size={13} className="text-accent" /> {conn.name} · {conn.host}:{conn.port}
           </div>
+          {aiOn && (
+            <div className="mb-2 flex items-center gap-2">
+              <Sparkles size={14} className="shrink-0 text-accent" />
+              <input
+                value={aiQ}
+                onChange={(e) => setAiQ(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && askAi()}
+                placeholder="İngilizce/Türkçe sor → sorgu üret (örn: son 7 günde en çok sipariş veren 10 müşteri)"
+                className="field flex-1 py-1.5 text-xs"
+              />
+              <button onClick={askAi} disabled={aiBusy || !aiQ.trim()} className="btn-ghost shrink-0 border border-ink-500 py-1.5 text-xs">
+                {aiBusy ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Üret
+              </button>
+            </div>
+          )}
           <textarea
             value={sql}
             onChange={(e) => setSql(e.target.value)}

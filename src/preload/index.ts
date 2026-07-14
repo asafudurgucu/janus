@@ -123,6 +123,10 @@ const api = {
     export: () => invoke<string>(IPC.sshConfigExport)
   },
   notify: (title: string, body: string) => ipcRenderer.send(IPC.notifyShow, title, body),
+  ai: {
+    chat: (messages: import('../shared/types').AiMessage[], system: string) =>
+      invoke<import('../shared/types').AiReply>(IPC.aiChat, messages, system)
+  },
   db: {
     test: (conn: import('../shared/types').DbConnection) => invoke<boolean>(IPC.dbTest, conn),
     query: (conn: import('../shared/types').DbConnection, sql: string) =>
