@@ -5,7 +5,7 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import { SearchAddon } from '@xterm/addon-search'
 import { Search, X, ChevronUp, ChevronDown, RotateCw } from 'lucide-react'
 import { useStore } from '../store'
-import type { Tab } from '../store'
+import type { SessionStatus } from '@shared/types'
 
 const THEME = {
   background: '#0a0b0d',
@@ -31,12 +31,20 @@ const THEME = {
   brightWhite: '#f1f5f9'
 }
 
-export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
+export default function TerminalView({
+  sessionId,
+  serverId,
+  onStatus
+}: {
+  sessionId: string
+  serverId: string
+  onStatus?: (s: SessionStatus) => void
+}): JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const searchRef = useRef<SearchAddon | null>(null)
-  const { vault, setTabStatus } = useStore()
+  const { vault } = useStore()
   const settings = vault?.settings
   const [showSearch, setShowSearch] = useState(false)
   const [query, setQuery] = useState('')
@@ -76,9 +84,8 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
       return true
     })
 
-    const sessionId = tab.id
-    const server = vault?.servers.find((s) => s.id === tab.serverId)
-    const target = server ? `${server.username}@${server.host}:${server.port}` : tab.serverId
+    const server = vault?.servers.find((s) => s.id === serverId)
+    const target = server ? `${server.username}@${server.host}:${server.port}` : serverId
 
     // Immediate feedback so the connecting phase never looks frozen.
     const dim = (s: string): void => term.writeln(`\x1b[38;5;245m${s}\x1b[0m`)
@@ -95,14 +102,14 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
 
     const doConnect = (): void => {
       window.janus.ssh
-        .connect(sessionId, tab.serverId, term.cols, term.rows)
+        .connect(sessionId, serverId, term.cols, term.rows)
         .catch((e) => term.writeln(`╰─ \x1b[31m✖ ${(e as Error).message}\x1b[0m`))
     }
 
     const keyDisposable = term.onData((d) => window.janus.ssh.data(sessionId, d))
     const offData = window.janus.ssh.onData(sessionId, (data) => term.write(data))
     const offStatus = window.janus.ssh.onStatus(sessionId, (p) => {
-      setTabStatus(sessionId, p.status as Tab['status'])
+      onStatus?.(p.status as SessionStatus)
       if (p.status === 'connected') {
         attempts = 0
         setDead(false)
@@ -165,7 +172,7 @@ export default function TerminalView({ tab }: { tab: Tab }): JSX.Element {
       term.dispose()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab.id, reconnectNonce])
+  }, [sessionId, reconnectNonce])
 
   useEffect(() => {
     const t = setTimeout(() => fitRef.current?.fit(), 30)

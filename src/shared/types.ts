@@ -95,6 +95,7 @@ export interface AppSettings {
   lockAfterMinutes: number // auto-lock idle vault, 0 = never
   copyOnSelect: boolean
   autoReconnect: boolean // reconnect dropped SSH sessions automatically
+  notifications: boolean // desktop notifications
 }
 
 /** The full decrypted vault — this is what gets serialized into the single encrypted file. */
@@ -118,7 +119,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   scrollback: 10000,
   lockAfterMinutes: 0,
   copyOnSelect: true,
-  autoReconnect: true
+  autoReconnect: true,
+  notifications: true
 }
 
 export function emptyVault(): Vault {
@@ -202,6 +204,17 @@ export interface GeneratedKey {
   type: KeyType
   privateKey: string // OpenSSH PEM
   publicKey: string // single-line authorized_keys format
+}
+
+// ---- SSH config import ----
+
+export interface ParsedSshHost {
+  name: string
+  host: string
+  port: number
+  username: string
+  privateKey?: string // contents of IdentityFile if readable
+  authMethod: AuthMethod
 }
 
 // ---- IPC channel result envelope ----

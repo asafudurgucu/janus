@@ -42,6 +42,13 @@ export const IPC = {
   // RDP — launch the OS remote desktop client
   rdpLaunch: 'rdp:launch',
 
+  // SSH config import/export
+  sshConfigImport: 'sshconfig:import',
+  sshConfigExport: 'sshconfig:export',
+
+  // Desktop notifications
+  notifyShow: 'notify:show',
+
   // System power events (main → renderer)
   systemResume: 'system:resume',
   systemSuspend: 'system:suspend',

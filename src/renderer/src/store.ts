@@ -107,6 +107,10 @@ interface Actions {
   // settings
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
 
+  // integrations
+  notify: (title: string, body: string) => void
+  importSshConfig: () => Promise<{ added: number; skipped: number }>
+
   // ui
   setSearch: (q: string) => void
   setTagFilter: (t: string | null) => void
@@ -349,6 +353,50 @@ export const useStore = create<UIState & Actions>((set, get) => ({
     if (!v) return
     set({ vault: { ...v, settings: { ...v.settings, ...patch } } })
     await get().persist()
+  },
+
+  notify(title, body) {
+    if (get().vault?.settings.notifications === false) return
+    window.janus.notify(title, body)
+  },
+
+  async importSshConfig() {
+    const v = get().vault
+    if (!v) return { added: 0, skipped: 0 }
+    const entries = await window.janus.sshConfig.import()
+    const now = Date.now()
+    let added = 0
+    let skipped = 0
+    const servers = [...v.servers]
+    for (const e of entries) {
+      if (servers.some((s) => s.host === e.host && s.username === e.username)) {
+        skipped++
+        continue
+      }
+      servers.push({
+        id: uuid(),
+        name: e.name,
+        host: e.host,
+        port: e.port,
+        username: e.username,
+        authMethod: e.authMethod,
+        password: '',
+        privateKey: e.privateKey || '',
+        passphrase: '',
+        groupId: null,
+        tags: ['imported'],
+        color: '#6366f1',
+        notes: '',
+        jumpHostId: null,
+        keepaliveInterval: 20,
+        createdAt: now,
+        updatedAt: now
+      })
+      added++
+    }
+    set({ vault: { ...v, servers } })
+    await get().persist()
+    return { added, skipped }
   },
 
   setSearch: (q) => set({ search: q }),

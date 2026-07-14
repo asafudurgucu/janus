@@ -1,10 +1,11 @@
-import { ipcMain, dialog, BrowserWindow, systemPreferences, powerMonitor } from 'electron'
+import { ipcMain, dialog, BrowserWindow, systemPreferences, powerMonitor, Notification } from 'electron'
 import { IPC } from '@shared/ipc'
 import { vaultStore } from './store'
 import { SSHManager } from './ssh-manager'
 import { setupAutoUpdater, updater } from './updater'
 import { generateKey } from './keygen'
 import { launchRdp } from './rdp'
+import { importSshConfig, exportSshConfig } from './sshconfig'
 import type { KeyType } from '@shared/types'
 import type { ServerProfile, TunnelRule, Vault, IpcResult } from '@shared/types'
 
@@ -139,6 +140,15 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   handle(IPC.rdpLaunch, async (serverId) => {
     await launchRdp(findServer(serverId as string))
     return true
+  })
+
+  // ---- SSH config import/export ----
+  handle(IPC.sshConfigImport, async () => importSshConfig())
+  handle(IPC.sshConfigExport, async () => exportSshConfig(vaultStore.read().servers))
+
+  // ---- Desktop notifications ----
+  ipcMain.on(IPC.notifyShow, (_e, title: string, body: string) => {
+    if (Notification.isSupported()) new Notification({ title, body, silent: false }).show()
   })
 
   // ---- Power events → renderer (reconnect after sleep) ----

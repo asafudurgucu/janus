@@ -14,9 +14,12 @@ import {
   AlertCircle,
   Loader2,
   Copy,
-  Check
+  Check,
+  FileEdit,
+  Save
 } from 'lucide-react'
 import { useStore } from '../store'
+import Modal from './Modal'
 import type { Tab } from '../store'
 import type { SftpEntry } from '@shared/types'
 
@@ -36,6 +39,7 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SftpEntry | null>(null)
 
   function copyPath(p: string): void {
     navigator.clipboard.writeText(p)
@@ -154,7 +158,7 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
                 <td
                   className="cursor-pointer px-4 py-1.5"
                   onClick={() => e.type === 'directory' && load(e.path)}
-                  onDoubleClick={() => e.type === 'directory' && load(e.path)}
+                  onDoubleClick={() => (e.type === 'directory' ? load(e.path) : setEditing(e))}
                 >
                   <div className="flex items-center gap-2">
                     {e.type === 'directory' ? (
@@ -179,13 +183,22 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
                       {copied === e.path ? <Check size={13} className="text-good" /> : <Copy size={13} />}
                     </button>
                     {e.type === 'file' && (
-                      <button
-                        onClick={() => action(`dl-${e.path}`, async () => { await window.janus.sftp.download(serverId, e.path) })}
-                        className="rounded p-1 text-slate-400 hover:bg-ink-500 hover:text-white"
-                        title="İndir"
-                      >
-                        <Download size={13} />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setEditing(e)}
+                          className="rounded p-1 text-slate-400 hover:bg-ink-500 hover:text-white"
+                          title="Düzenle"
+                        >
+                          <FileEdit size={13} />
+                        </button>
+                        <button
+                          onClick={() => action(`dl-${e.path}`, async () => { await window.janus.sftp.download(serverId, e.path) })}
+                          className="rounded p-1 text-slate-400 hover:bg-ink-500 hover:text-white"
+                          title="İndir"
+                        >
+                          <Download size={13} />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() =>
@@ -229,6 +242,77 @@ export default function SftpPanel({ tab }: { tab: Tab }): JSX.Element {
           </div>
         )}
       </div>
+
+      {editing && <FileEditor serverId={serverId} entry={editing} onClose={() => setEditing(null)} />}
     </div>
+  )
+}
+
+function FileEditor({ serverId, entry, onClose }: { serverId: string; entry: SftpEntry; onClose: () => void }): JSX.Element {
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const tooBig = entry.size > 2 * 1024 * 1024
+
+  useEffect(() => {
+    if (tooBig) {
+      setErr('Dosya 2MB\'den büyük — düzenleyici desteklemiyor. İndirmeyi kullan.')
+      setLoading(false)
+      return
+    }
+    window.janus.sftp
+      .readFile(serverId, entry.path)
+      .then((c) => setContent(c))
+      .catch((e) => setErr((e as Error).message))
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function save(): Promise<void> {
+    setSaving(true)
+    setErr(null)
+    try {
+      await window.janus.sftp.writeFile(serverId, entry.path, content)
+      onClose()
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal
+      title={`Düzenle · ${entry.name}`}
+      onClose={onClose}
+      width={720}
+      footer={
+        <>
+          <button onClick={onClose} className="btn-ghost">İptal</button>
+          <button onClick={save} disabled={saving || loading || tooBig} className="btn-primary">
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Kaydet
+          </button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
+          <Loader2 size={16} className="animate-spin" /> Dosya yükleniyor…
+        </div>
+      ) : (
+        <>
+          {err && <div className="mb-2 rounded-md bg-bad/10 px-3 py-2 text-xs text-bad">{err}</div>}
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            spellCheck={false}
+            className="field h-[52vh] resize-none font-mono text-xs leading-relaxed"
+            placeholder="(boş)"
+          />
+          <p className="mt-1.5 font-mono text-[10px] text-slate-600">{entry.path}</p>
+        </>
+      )}
+    </Modal>
   )
 }

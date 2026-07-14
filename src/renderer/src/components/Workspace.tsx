@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Terminal as TerminalIcon, FolderTree, Box, ScrollText, Monitor, X, XCircle, ListX } from 'lucide-react'
 import { useStore } from '../store'
-import TerminalView from './Terminal'
+import SplitTerminal from './SplitTerminal'
 import SftpPanel from './SftpPanel'
 import DockerPanel from './DockerPanel'
 import LogsPanel from './LogsPanel'
@@ -121,7 +121,7 @@ export default function Workspace(): JSX.Element {
           tabs.map((tab) => (
             <div key={tab.id} className="absolute inset-0" style={{ display: tab.id === activeTabId ? 'block' : 'none' }}>
               {tab.kind === 'terminal' ? (
-                <TerminalView tab={tab} />
+                <SplitTerminal tab={tab} />
               ) : tab.kind === 'sftp' ? (
                 <SftpPanel tab={tab} />
               ) : tab.kind === 'docker' ? (

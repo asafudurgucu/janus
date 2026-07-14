@@ -40,13 +40,15 @@ masaüstüne, filo izlemeden çoklu komuta kadar bir **sunucu komuta merkezi** s
 
 ## ✨ Öne çıkanlar
 
-- **🖥️ Entegre SSH terminal** — çoklu sekme, arama, otomatik yeniden bağlanma, jump host.
+- **🖥️ Entegre SSH terminal** — çoklu sekme, **bölünmüş panel** (4'e kadar), arama, otomatik yeniden bağlanma, jump host.
 - **🖱️ VNC uzak masaüstü** — sunucunun ekranına SSH tüneli üzerinden şifreli bağlan, fare/klavye kontrolü.
 - **🪟 RDP (Windows uzak masaüstü)** — sistemin RDP istemcisini tek tıkla sunucuya bağlı açar (Mac/Win/Linux).
 - **📊 Filo paneli** — tüm sunucuların CPU/RAM/disk/uptime durumu canlı, tek ekranda.
 - **📡 Broadcast** — bir komutu onlarca sunucuda aynı anda çalıştır, çıktıları yan yana gör.
 - **🐳 Docker & systemd** — konteyner/servis başlat-durdur-restart, süreç yönetimi, canlı log akışı.
-- **📁 SFTP & port tünelleri** — dosya transferi + local/remote/dynamic forwarding.
+- **📁 SFTP & port tünelleri** — dosya transferi, **uzak dosya düzenleme**, yol kopyalama + local/remote/dynamic forwarding.
+- **🔁 `~/.ssh/config` içe/dışa aktar** — mevcut sunucularını tek tıkla getir/gönder.
+- **🔔 Masaüstü bildirimleri** — komut bitince / sunucu düşünce haber ver.
 - **🔑 SSH anahtar yöneticisi** — uygulama içinde anahtar üret, sunucuya tek tıkla kur.
 - **📝 Yüzen not defteri** — şifreler/notlar için proje geneli, sürüklenip boyutlandırılabilen, şifreli kayıtlı pano.
 - **🪟 Mini panel modu** — pencereyi küçült, üstte sabitle; web/editör yanına koyabileceğin kompakt terminal.

@@ -13,7 +13,11 @@ import {
   Palette,
   Clock,
   Cloud,
-  Plug
+  Plug,
+  FileUp,
+  FileDown,
+  Bell,
+  Loader2
 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ThemeId } from '@shared/types'
@@ -92,6 +96,9 @@ export default function SettingsPanel(): JSX.Element {
               Bağlantı koparsa otomatik yeniden bağlan
             </label>
           </Section>
+
+          {/* Integrations */}
+          <IntegrationsSection />
 
           {/* Vault */}
           <VaultSection />
@@ -244,6 +251,67 @@ function VaultSection(): JSX.Element {
           {msg.type === 'ok' ? <Check size={14} /> : <AlertCircle size={14} />} {msg.text}
         </div>
       )}
+    </Section>
+  )
+}
+
+function IntegrationsSection(): JSX.Element {
+  const { vault, updateSettings, importSshConfig } = useStore()
+  const s = vault!.settings
+  const [busy, setBusy] = useState<'imp' | 'exp' | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  async function doImport(): Promise<void> {
+    setBusy('imp')
+    setMsg(null)
+    try {
+      const { added, skipped } = await importSshConfig()
+      setMsg(`İçe aktarıldı: ${added} sunucu eklendi${skipped ? `, ${skipped} zaten vardı` : ''}.`)
+    } catch (e) {
+      setMsg((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+  async function doExport(): Promise<void> {
+    setBusy('exp')
+    setMsg(null)
+    try {
+      const path = await window.janus.sshConfig.export()
+      setMsg(`Dışa aktarıldı: ${path}`)
+    } catch (e) {
+      setMsg((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Section icon={Plug} title="Entegrasyonlar">
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+        <input
+          type="checkbox"
+          checked={s.notifications}
+          onChange={(e) => updateSettings({ notifications: e.target.checked })}
+          className="h-4 w-4 accent-accent"
+        />
+        <Bell size={14} className="text-slate-500" /> Masaüstü bildirimleri (komut bitince, sunucu düşünce)
+      </label>
+
+      <div className="mt-2 border-t border-ink-600 pt-3">
+        <p className="mb-2 text-xs text-slate-500">
+          <span className="font-mono">~/.ssh/config</span> ile senkron:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={doImport} disabled={!!busy} className="btn-ghost border border-ink-500">
+            {busy === 'imp' ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />} İçe aktar
+          </button>
+          <button onClick={doExport} disabled={!!busy} className="btn-ghost border border-ink-500">
+            {busy === 'exp' ? <Loader2 size={15} className="animate-spin" /> : <FileUp size={15} />} Dışa aktar
+          </button>
+        </div>
+      </div>
+      {msg && <p className="mt-2 break-all text-xs text-slate-400">{msg}</p>}
     </Section>
   )
 }

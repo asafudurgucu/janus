@@ -7,12 +7,13 @@ import type { ServerMetrics } from '@shared/types'
 type MetricMap = Record<string, ServerMetrics | 'loading' | undefined>
 
 export default function FleetDashboard(): JSX.Element {
-  const { vault, openTerminal, selectServer, setSidePanel } = useStore()
+  const { vault, openTerminal, selectServer, setSidePanel, notify } = useStore()
   const servers = vault?.servers ?? []
   const [metrics, setMetrics] = useState<MetricMap>({})
   const [refreshing, setRefreshing] = useState(false)
   const [auto, setAuto] = useState(true)
   const timer = useRef<ReturnType<typeof setInterval>>()
+  const prevReach = useRef<Record<string, boolean>>({})
 
   const refreshAll = useCallback(async () => {
     if (servers.length === 0) return
@@ -29,8 +30,14 @@ export default function FleetDashboard(): JSX.Element {
         try {
           const r = await window.janus.ssh.metrics(s.id)
           setMetrics((m) => ({ ...m, [s.id]: r }))
+          // Notify on a fresh transition to unreachable.
+          if (prevReach.current[s.id] === true && !r.reachable) {
+            notify('Sunucu çevrimdışı', `${s.name} (${s.host}) yanıt vermiyor.`)
+          }
+          prevReach.current[s.id] = r.reachable
         } catch (e) {
           setMetrics((m) => ({ ...m, [s.id]: { reachable: false, error: (e as Error).message } }))
+          prevReach.current[s.id] = false
         }
       })
     )

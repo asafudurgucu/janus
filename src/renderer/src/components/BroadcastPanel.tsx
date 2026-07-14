@@ -12,7 +12,7 @@ interface Result {
 }
 
 export default function BroadcastPanel(): JSX.Element {
-  const { vault } = useStore()
+  const { vault, notify } = useStore()
   const servers = vault?.servers ?? []
   const groups = vault?.groups ?? []
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -56,6 +56,7 @@ export default function BroadcastPanel(): JSX.Element {
       })
     )
     setRunning(false)
+    notify('Broadcast tamamlandı', `${ids.length} sunucuda "${command}" çalıştırıldı.`)
   }
 
   return (

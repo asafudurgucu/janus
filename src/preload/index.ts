@@ -118,6 +118,11 @@ const api = {
   rdp: {
     launch: (serverId: string) => invoke<boolean>(IPC.rdpLaunch, serverId)
   },
+  sshConfig: {
+    import: () => invoke<import('../shared/types').ParsedSshHost[]>(IPC.sshConfigImport),
+    export: () => invoke<string>(IPC.sshConfigExport)
+  },
+  notify: (title: string, body: string) => ipcRenderer.send(IPC.notifyShow, title, body),
   power: {
     onResume: (cb: () => void) => {
       const listener = (): void => cb()
